@@ -1,0 +1,13 @@
+version: '2'
+services:
+  redis:
+    image: redis:alpine
+  ab:
+    image: openresty/openresty:alpine
+    volumes:
+      - ./ab.conf:/etc/nginx/conf.d/default.conf
+    links:
+      - redis
+    ports:
+      - "0.0.0.0:8011:80"
+
