@@ -3,7 +3,7 @@ services:
   redis:
     image: redis:alpine
   ab:
-    image: openresty/openresty:alpine
+    image: ab
     volumes:
       - ./ab.conf:/etc/nginx/conf.d/default.conf
     links:
