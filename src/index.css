@@ -1,0 +1,8 @@
+
+html, body, :global(#root) {
+  height: 100%;
+}
+ul, ol {
+  list-style-type: none;
+  padding-inline-start: 0px;
+}
