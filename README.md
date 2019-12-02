@@ -1,6 +1,7 @@
 # Hawkeye
 
 鹰眼（Hawkeye）是美国漫威漫画旗下超级英雄，初次登场于《悬疑故事》（Tales of Suspense）第57期（1964年9月），由斯坦·李和唐·海克联合创造。本名克林顿·弗朗西斯·巴顿（Clinton Francis Barton），小名克林特（Clint），曾化名为歌利亚（Goliath）与浪人（Ronin），是个在马戏团长大的孤儿，师从剑客（Swordsman）和捷射（Trick Shot），天赋异常，小时候便获得“鹰眼“和“世界最佳狙击手”的称号，因在某次演出时看到钢铁侠救人的一幕后，决定利用自己的能力成为超级英雄，后加入复仇者联盟，成为其中重要的一员。
+
 ![](http://image.qiluyidian.mobi/20160902YzLfc9gaesmHoCGSU1n4.gif)
 
 # AB测试项目（替换testin）
