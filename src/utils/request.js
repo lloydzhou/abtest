@@ -4,33 +4,7 @@ import { isArray } from 'lodash'
 
 
 function parseJSON(response) {
-  const cT = response.headers.get('Content-Type')
-  if (cT.indexOf('excel') > -1 || cT.indexOf('officedocument.spreadsheetml.sheet') > -1) {
-    response.blob && response.blob().then(blob => {
-      let date = new Date()
-      let time = `${date.getFullYear()}-${(date.getMonth() * 1 + 1)}-${date.getDate()}`;
-      let filename = `激活码_${time}.xlsx`
-      if (window.navigator.msSaveOrOpenBlob) {
-        navigator.msSaveBlob(blob, filename);  //兼容ie10
-      } else {
-        var a = document.createElement('a');
-        document.body.appendChild(a) //兼容火狐，将a标签添加到body当中
-        var url = window.URL.createObjectURL(blob);   // 获取 blob 本地文件连接 (blob 为纯二进制对象，不能够直接保存到磁盘上)
-        a.href = url;
-        a.download = filename;
-        a.target = '_blank'  // a标签增加target属性
-        a.click();
-        a.remove()  //移除a标签
-        window.URL.revokeObjectURL(url);
-      }
-    })
-    return {
-      code: 0,
-      msg: '下载成功'
-    }
-  } else {
-    return response.json();
-  }
+  return response.json();
 }
 
 function checkStatus(response) {
@@ -45,7 +19,8 @@ function checkStatus(response) {
 
 //export const host = 'https://admin.renrenshangpin.cn';
 
-export const host = process.env.NODE_ENV === 'production' ? window.location.origin : 'https://ab.quzhaopinapp.com';
+// export const host = process.env.NODE_ENV === 'production' ? window.location.origin : 'https://ab.quzhaopinapp.com';
+export const host = '';
 
 
 /**

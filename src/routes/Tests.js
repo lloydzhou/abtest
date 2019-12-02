@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
-import { Layout, Menu, Breadcrumb, Table } from 'antd';
+import { Layout, Menu, Breadcrumb, Table, Button } from 'antd';
 
 const { Header, Content, Footer } = Layout;
 
@@ -37,7 +37,41 @@ class Tests extends Component {
                 title: '测试名称',
                 dataIndex: 'name',
                 key: 'name',
-              },              
+              },
+              {
+                title: '变量名称',
+                dataIndex: 'var_name',
+                key: 'var_name',
+              },
+              {
+                title: '变量类型',
+                dataIndex: 'var_type',
+                key: 'var_type',
+              },
+              {
+                title: '默认值',
+                dataIndex: 'default_value',
+                key: 'default_value',
+              },
+              {
+                title: (<div>状态
+                  <Button style={{marginLeft: '20px'}} type="primary">新增实验</Button>
+                </div>),
+                dataIndex: 'status',
+                key: 'status',
+                render(status) {
+                  return <div>
+                    {status}
+                    <br />
+                    <Button.Group>
+                      <Button>编辑</Button>
+                      {status === 'init' ? <Button type="primary">启动</Button> : null}
+                      {status === 'running' ? <Button type="danger">停止</Button> : null}
+                      {status === 'stoped' ? <Button type="danger">删除</Button> : null}
+                    </Button.Group>
+                  </div>
+                }
+              },
             ]} pagination={false} />;
           </div>
         </Content>

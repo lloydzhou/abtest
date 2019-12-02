@@ -5,5 +5,11 @@
     ["import", { "libraryName": "antd", "libraryDirectory": "es", "style": true }]
   ],
   "commons": [{"name": "vendor"}],
-  "ignoreMomentLocale": true
+  "ignoreMomentLocale": true,
+  "proxy": {
+    "/ab": {
+      "target": "https://ab.quzhaopinapp.com/",
+      "changeOrigin": true
+    }
+  }
 }
