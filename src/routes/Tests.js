@@ -227,7 +227,7 @@ const NewTargetFrom = Form.create()(({ newTargetVarName, dispatch, form }) => {
   )
 })
 
-const NewVersionFrom = Form.create()(({ newVersion, dispatch, form }) => {
+const NewVersionFrom = Form.create()(({ newVersion, dispatch, testWeight, form }) => {
   const { getFieldDecorator } = form;
   return (
     <Modal
@@ -257,6 +257,13 @@ const NewVersionFrom = Form.create()(({ newVersion, dispatch, form }) => {
           {getFieldDecorator('value', {
             rules: [
               { required: true, message: '变量取值' },
+              { validator: (rule, value, callback) => {
+                const weights = testWeight[newVersion.var_name] ? testWeight[newVersion.var_name].weight : []
+                if (weights.map(({value}) => value).indexOf(value) > -1) {
+                  return callback('变量取值重复')
+                }
+                callback()
+              }}
             ],
           })(
             <Input />
@@ -339,7 +346,7 @@ class Tests extends Component {
           <NewTestFrom dispatch={dispatch} visible={showNewTestFrom} layers={layers} layerWeight={layerWeight} />
           <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest.var_name]}/>
           <NewTargetFrom newTargetVarName={newTargetVarName} dispatch={dispatch} />
-          <NewVersionFrom newVersion={newVersion} dispatch={dispatch} />
+          <NewVersionFrom newVersion={newVersion} testWeight={testWeight} dispatch={dispatch} />
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
             <Table dataSource={tests} rowKey={row => row.var_name} columns={[
               {
