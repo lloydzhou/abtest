@@ -56,7 +56,7 @@ export default {
     *getTests({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getTests)
       if (!err && data.code === 0) {
-        const tests = data.tests.length ? data.tests.chunk(6).map(item => {
+        const tests = data.tests.length ? data.tests.chunk(8).map(item => {
           const [var_name, name, layer, var_type, status, default_value] = item
           return {
             var_name, name, layer, var_type, status, default_value
