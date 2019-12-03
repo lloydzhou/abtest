@@ -18,7 +18,7 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
       key="NewTestFrom"
       width={600}
       onCancel={e => {
-        dispatch({ type: 'common/save', payload: {showNewTestFrom: false } })
+        dispatch({ type: 'common/save', payload: {showNewTestForm: false } })
       }}
       footer={null}
     >
@@ -321,7 +321,7 @@ class Tests extends Component {
     const {
       tests=[], layers=[], layerWeight={}, testWeight={},
       newTargetVarName, newVersion, env,
-      showNewTestFrom=false, editTest, targets=[], dispatch
+      showNewTestForm=false, editTest, targets=[], dispatch
     } = this.props
     const testAction = this.testAction.bind(this)
     return (
@@ -358,7 +358,7 @@ class Tests extends Component {
             </Breadcrumb.Item>
             <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
-          <NewTestFrom dispatch={dispatch} visible={showNewTestFrom} layers={layers} layerWeight={layerWeight} />
+          <NewTestFrom dispatch={dispatch} visible={showNewTestForm} layers={layers} layerWeight={layerWeight} />
           <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest.var_name]}/>
           <NewTargetFrom newTargetVarName={newTargetVarName} dispatch={dispatch} />
           <NewVersionFrom newVersion={newVersion} testWeight={testWeight} dispatch={dispatch} />
@@ -450,7 +450,7 @@ class Tests extends Component {
               {
                 title: (<div>状态
                   <Button style={{marginLeft: '20px'}} type="primary" onClick={e => {
-                    dispatch({ type: 'common/save', payload: {showNewTestFrom: true}})
+                    dispatch({ type: 'common/save', payload: {showNewTestForm: true}})
                   }}>新增实验</Button>
                 </div>),
                 dataIndex: 'status',
