@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
-import { Layout, Menu, Breadcrumb, Table, Button } from 'antd';
+import { Link } from 'dva/router';
+import { Layout, Menu, Breadcrumb, Table, Button, Progress } from 'antd';
 
 const { Header, Content, Footer } = Layout;
 
@@ -12,7 +13,7 @@ class Tests extends Component {
   }
   
   render() {
-    const { tests=[], layers=[] } = this.props
+    const { tests=[], layers=[], testWeight={} } = this.props
     return (
       <Layout className="layout">
         <Header>
@@ -20,19 +21,25 @@ class Tests extends Component {
           <Menu
             theme="dark"
             mode="horizontal"
-            defaultSelectedKeys={['1']}
+            defaultSelectedKeys={['tests']}
             style={{ lineHeight: '64px' }}
           >
-            <Menu.Item key="1">首页</Menu.Item>
+            <Menu.Item key="layers"><Link to="/layers">流量</Link></Menu.Item>
+            <Menu.Item key="tests">实验</Menu.Item>
           </Menu>
         </Header>
         <Content style={{ padding: '0 50px' }}>
           <Breadcrumb style={{ margin: '16px 0' }}>
-            <Breadcrumb.Item>Home</Breadcrumb.Item>
-            <Breadcrumb.Item>Test</Breadcrumb.Item>
+            <Breadcrumb.Item>首页</Breadcrumb.Item>
+            <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
           <div style={{ background: '#fff', padding: 24, minHeight: 280 }}>
             <Table dataSource={tests} columns={[
+              {
+                title: '流量层',
+                dataIndex: 'layer',
+                key: 'layer',
+              },
               {
                 title: '测试名称',
                 dataIndex: 'name',
@@ -52,6 +59,15 @@ class Tests extends Component {
                 title: '默认值',
                 dataIndex: 'default_value',
                 key: 'default_value',
+              },
+              {
+                title: '已分配流量',
+                dataIndex: 'var_name',
+                key: 'var_name',
+                render(var_name) {
+                  const percent = testWeight[var_name] ? testWeight[var_name].total : 0
+                  return <Progress percent={percent} />
+                }
               },
               {
                 title: (<div>状态
