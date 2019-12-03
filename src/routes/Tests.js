@@ -265,14 +265,19 @@ class Tests extends Component {
                 dataIndex: 'var_name',
                 key: 'version',
                 width: 180,
-                render(var_name) {
+                render(var_name, row) {
                   const weights = testWeight[var_name] ? testWeight[var_name].weight : []
                   return <div>
                     {weights.map(({value, weight}) => {
                       return <Progress style={{width: 100}} percent={weight} showInfo format={v => `${value}: ${v}%`}/>
                     })}
                     <br />
-                    <Button type="primary" size="small" icon="plus-circle" title="添加版本"/>
+                    <Button.Group>
+                      <Button type="primary" size="small" icon="edit" onClick={e => {
+                        dispatch({ type: 'common/save', payload: { editTest: {var_name: row.var_name} }})
+                      }} title="编辑版本流量"/>
+                      <Button type="primary" size="small" icon="plus-circle" title="添加版本"/>
+                    </Button.Group>
                   </div>
                 }
               },
@@ -302,15 +307,10 @@ class Tests extends Component {
                 render(status, row) {
                   return <div>
                     {status}
-                    <br />
-                    <Button.Group>
-                      <Button onClick={e => {
-                        dispatch({ type: 'common/save', payload: { editTest: {var_name: row.var_name} }})
-                      }}>编辑流量</Button>
-                      {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
-                      {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
-                      {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
-                    </Button.Group>
+                    <br />  
+                    {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
+                    {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
+                    {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
                   </div>
                 }
               },
