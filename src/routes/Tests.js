@@ -182,6 +182,116 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
   )
 }
 
+const NewTargetFrom = Form.create()(({ newTargetVarName, dispatch, form }) => {
+  const { getFieldDecorator } = form;
+  return (
+    <Modal
+      title={`给${newTargetVarName}新增指标`}
+      visible={!!newTargetVarName}
+      key={newTargetVarName}
+      width={600}
+      onCancel={e => {
+        dispatch({ type: 'common/save', payload: {newTargetVarName: false } })
+      }}
+      footer={null}
+    >
+      <Form onSubmit={e => {
+        e.preventDefault();
+        form.validateFields((err, values) => {
+          if (!err) {
+            dispatch({ type: 'common/addTarget', var_name: newTargetVarName, target: values.target })
+          }
+        })
+
+      }}>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="指标名称"
+        >
+          {getFieldDecorator('target', {
+            rules: [
+              { required: true, message: '指标名称' },
+            ],
+          })(
+            <Input />
+          )}
+        </FormItem>
+        <FormItem
+          wrapperCol={{ span: 4, offset: 20 }}
+        >
+          <Button type="primary" htmlType="submit">保存</Button>
+        </FormItem>
+      </Form>
+    </Modal>
+  )
+})
+
+const NewVersionFrom = Form.create()(({ newVersion, dispatch, form }) => {
+  const { getFieldDecorator } = form;
+  return (
+    <Modal
+      title={`给${newVersion ? newVersion.name : ''}新增指标`}
+      visible={!!newVersion}
+      key={newVersion && newVersion.var_name || 'NewVersionFrom'}
+      width={600}
+      onCancel={e => {
+        dispatch({ type: 'common/save', payload: {newVersion: false } })
+      }}
+      footer={null}
+    >
+      <Form onSubmit={e => {
+        e.preventDefault();
+        form.validateFields((err, values) => {
+          if (!err) {
+            dispatch({ type: 'common/editTestWeight', var_name: newVersion.var_name, value: values.value, weight: values.weight })
+          }
+        })
+
+      }}>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="变量取值（版本）"
+        >
+          {getFieldDecorator('value', {
+            rules: [
+              { required: true, message: '变量取值' },
+            ],
+          })(
+            <Input />
+          )}
+        </FormItem>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="使用实验流量"
+        >
+          {getFieldDecorator('weight', {
+            rules: [
+              { validator: (rule, value, callback) => {
+                const weight = newVersion.weight
+                if (value <= 100 - weight) {
+                  return callback()
+                } else {
+                  return callback(`流量超出剩余: ${100 - weight}`)
+                }
+              }},
+            ],
+          })(
+            <Slider tooltipVisible />
+          )}
+        </FormItem>
+        <FormItem
+          wrapperCol={{ span: 4, offset: 20 }}
+        >
+          <Button type="primary" htmlType="submit">保存</Button>
+        </FormItem>
+      </Form>
+    </Modal>
+  )
+})
+
 class Tests extends Component {
   constructor(props) {
     super(props);
@@ -201,7 +311,11 @@ class Tests extends Component {
   }
   
   render() {
-    const { tests=[], layers=[], layerWeight={}, testWeight={}, showNewTestFrom=false, editTest, targets=[], dispatch } = this.props
+    const {
+      tests=[], layers=[], layerWeight={}, testWeight={},
+      newTargetVarName, newVersion,
+      showNewTestFrom=false, editTest, targets=[], dispatch
+    } = this.props
     const testAction = this.testAction.bind(this)
     return (
       <Layout className="layout">
@@ -224,6 +338,8 @@ class Tests extends Component {
           </Breadcrumb>
           <NewTestFrom dispatch={dispatch} visible={showNewTestFrom} layers={layers} layerWeight={layerWeight} />
           <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest.var_name]}/>
+          <NewTargetFrom newTargetVarName={newTargetVarName} dispatch={dispatch} />
+          <NewVersionFrom newVersion={newVersion} dispatch={dispatch} />
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
             <Table dataSource={tests} rowKey={row => row.var_name} columns={[
               {
@@ -269,14 +385,25 @@ class Tests extends Component {
                   const weights = testWeight[var_name] ? testWeight[var_name].weight : []
                   return <div>
                     {weights.map(({value, weight}) => {
-                      return <Progress style={{width: 100}} percent={weight} showInfo format={v => `${value}: ${v}%`}/>
+                      return <Progress key={value} style={{width: 100}} percent={weight} format={v => `${value}: ${v}%`}/>
                     })}
                     <br />
                     <Button.Group>
                       <Button type="primary" size="small" icon="edit" onClick={e => {
                         dispatch({ type: 'common/save', payload: { editTest: {var_name: row.var_name} }})
                       }} title="编辑版本流量"/>
-                      <Button type="primary" size="small" icon="plus-circle" title="添加版本"/>
+                      <Button type="primary" size="small" icon="plus-circle" title="添加版本" onClick={e => {
+                        dispatch({
+                          type: 'common/save',
+                          payload: {
+                            newVersion: {
+                              var_name: row.var_name,
+                              name: row.name,
+                              weight: testWeight[var_name] ? testWeight[var_name].total : 0
+                            }
+                          }
+                        })
+                      }}/>
                     </Button.Group>
                   </div>
                 }
@@ -285,14 +412,16 @@ class Tests extends Component {
                 title: '指标',
                 dataIndex: 'var_name',
                 key: 'target',
-                render(var_name) {
+                render(var_name, row) {
                   const target = targets.filter(t => t.var_name === var_name)
                   return <div>
                     {target.map(({target_name}) => {
                       return <div key={target_name}>{target_name}</div>
                     })}
                     <br />
-                    <Button type="primary" size="small" icon="plus-circle" title="添加指标"/>
+                    <Button type="primary" size="small" icon="plus-circle" title="添加指标" onClick={e => {
+                      dispatch({ type: 'common/save', payload: { newTargetVarName: row.var_name }})
+                    }}/>
                   </div>
                 }
               },

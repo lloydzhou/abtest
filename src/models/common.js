@@ -147,15 +147,14 @@ export default {
       const { err, data } = yield call(editTestWeight, var_name, value, weight)
       if (!err && data.code === 0) {
         yield put({ type: 'getTestWeight', var_name })
-        yield put({ type: 'save', payload: {editTest: null} })
-        yield put({ type: 'save', payload: {showNewVersionForm: false}})
+        yield put({ type: 'save', payload: {editTest: null, newVersion: null} })
       }
     },
     *addTarget({ var_name, target }, { put, call }) {
       const { err, data } = yield call(addTarget, var_name, target)
       if (!err && data.code === 0) {
-        yield put({ type: 'getTests' })
-        yield put({ type: 'save', payload: {showNewTargetForm: false}})
+        yield put({ type: 'getTargets' })
+        yield put({ type: 'save', payload: {newTargetVarName: false}})
       }
     },
   },
