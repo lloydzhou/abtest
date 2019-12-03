@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Slider, Progress, Form, Modal, Input } from 'antd';
+import { Layout, Menu, Breadcrumb, Table, Button, Slider, Progress, Form, Modal, Input, message } from 'antd';
 import { editLayerWeight } from '../services/common';
 
 const { Header, Content, Footer } = Layout;
@@ -64,24 +64,25 @@ const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
       onCancel={e => {
         dispatch({ type: 'common/save', payload: {editLayer: null } })
       }}
-      onOk={e => {
-        const changes = weights.filter(({ var_name, weight}) => editLayer[var_name] && weight != editLayer[var_name])
-        console.log(editLayer, layerWeight, changes)
-        if (changes.length) {
-          Promise.all(changes.map(({ var_name }) => editLayerWeight(editLayer.layer, var_name, editLayer[var_name]))).then(res => {
-            console.log(res)
-            dispatch({ type: 'common/getLayerWeight', layer: editLayer.layer })
-            dispatch({ type: 'common/save', payload: {editLayer: null } })
-          })
-        }      
+      onOk={e => {        
+        const total = weights.map(({ var_name, weight}) => editLayer[var_name] ? editLayer[var_name] : weight).reduce((s, i) => s + i)
+        if (total > 100) {
+          message.error("总流量超出")
+        } else {
+          const changes = weights.filter(({ var_name, weight}) => editLayer[var_name] && weight != editLayer[var_name])
+          if (changes.length) {
+            Promise.all(changes.map(({ var_name }) => editLayerWeight(editLayer.layer, var_name, editLayer[var_name]))).then(res => {
+              console.log(res)
+              dispatch({ type: 'common/getLayerWeight', layer: editLayer.layer })
+              dispatch({ type: 'common/save', payload: {editLayer: null } })
+            })
+          }      
+        }
       }}
-      // footer={<Button type="primary" htmlType="submit" onClick={e => {
-      //   dispatch({ type: 'common/save', payload: {editLayer: null } })
-      // }}>关闭</Button>}
     >
       {weights.map(({var_name, weight}) => {
         return <Slider key={var_name} defaultValue={weight} onChange={(e) => {
-          console.log(e, var_name, weight, total)
+          // console.log(e, var_name, weight, total)
           editLayer[var_name] = e
           dispatch({ type: 'save', payload: {editLayer: {...editLayer}}})
           // return false

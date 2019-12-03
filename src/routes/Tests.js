@@ -1,9 +1,143 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Progress } from 'antd';
+import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select } from 'antd';
+import { call } from 'redux-saga/effects';
 
 const { Header, Content, Footer } = Layout;
+const FormItem = Form.Item;
+const Option = Select.Option;
+
+
+const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatch, form }) => {
+  const { getFieldDecorator } = form;
+  return (
+    <Modal
+      title="新增实验"
+      visible={visible}
+      key="NewTestFrom"
+      width={600}
+      onCancel={e => {
+        dispatch({ type: 'common/save', payload: {showNewTestFrom: false } })
+      }}
+      footer={null}
+    >
+      <Form onSubmit={e => {
+        e.preventDefault();
+        form.validateFields((err, values) => {
+          //layer, layer_weight, var_name, test_name, var_type, default_value
+          console.log(err, values)
+          if (!err) {
+            dispatch({ type: 'common/addTest', ...values })
+          }
+        })
+      }}>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="流量层名称"
+        >
+          {getFieldDecorator('layer', {
+            rules: [
+              { required: true, message: '流量层名称' },
+            ],
+          })(
+            <Select>
+              {layers.map(layer => <Option key={layer}>{layer}</Option>)}
+            </Select>
+          )}
+        </FormItem>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="使用流量层流量"
+        >
+          {getFieldDecorator('layer_weight', {
+            rules: [
+              { validator: (rule, value, callback) => {
+                const layer = form.getFieldValue('layer')
+                const weight = layerWeight[layer]
+                console.log(rule, value, form, layer)
+                if (layer && weight) {
+                  if (value <= 100 - weight.total) {
+                    return callback()
+                  } else {
+                    return callback(`流量超出剩余: ${100 - weight.total}`)
+                  }
+                }else{
+                  callback('请选择正确地流量层')
+                }
+                console.log(layer, weight)
+              }},
+            ],
+          })(
+            <Slider tooltipVisible />
+          )}
+        </FormItem>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="实验名称"
+        >
+          {getFieldDecorator('test_name', {
+            rules: [
+              { required: true, message: '实验名称' },
+            ],
+          })(
+            <Input />
+          )}
+        </FormItem>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="变量名称"
+        >
+          {getFieldDecorator('var_name', {
+            rules: [
+              { required: true, message: '变量名称' },
+            ],
+          })(
+            <Input />
+          )}
+        </FormItem>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="变量类型"
+        >
+          {getFieldDecorator('var_type', {
+            rules: [
+              { required: true, message: '变量名称' },
+            ],
+          })(
+            <Radio.Group>
+              <Radio value="number">数字</Radio>
+              <Radio value="string">字符串</Radio>
+            </Radio.Group>
+          )}
+        </FormItem>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="变量默认值"
+        >
+          {getFieldDecorator('default_value', {
+            rules: [
+              { required: true, message: '变量默认值' },
+            ],
+          })(
+            <Input />
+          )}
+        </FormItem>
+        <FormItem
+          wrapperCol={{ span: 4, offset: 20 }}
+        >
+          <Button type="primary" htmlType="submit">保存</Button>
+        </FormItem>
+      </Form>
+    </Modal>
+  )
+})
 
 class Tests extends Component {
   constructor(props) {
@@ -13,7 +147,7 @@ class Tests extends Component {
   }
   
   render() {
-    const { tests=[], layers=[], testWeight={} } = this.props
+    const { tests=[], layers=[], layerWeight={}, testWeight={}, showNewTestFrom=false, dispatch } = this.props
     return (
       <Layout className="layout">
         <Header>
@@ -33,6 +167,7 @@ class Tests extends Component {
             <Breadcrumb.Item>首页</Breadcrumb.Item>
             <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
+          <NewTestFrom dispatch={dispatch} visible={showNewTestFrom} layers={layers} layerWeight={layerWeight} />
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
             <Table dataSource={tests} rowKey={row => row.var_name} columns={[
               {
@@ -71,7 +206,9 @@ class Tests extends Component {
               },
               {
                 title: (<div>状态
-                  <Button style={{marginLeft: '20px'}} type="primary">新增实验</Button>
+                  <Button style={{marginLeft: '20px'}} type="primary" onClick={e => {
+                    dispatch({ type: 'common/save', payload: {showNewTestFrom: true}})
+                  }}>新增实验</Button>
                 </div>),
                 dataIndex: 'status',
                 key: 'status',
