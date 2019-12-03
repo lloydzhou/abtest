@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, Icon, message } from 'antd';
+import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, message } from 'antd';
 import { editTestWeight } from '../services/common';
 
 const { Header, Content, Footer } = Layout;
@@ -141,7 +141,7 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
 
 
 const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
-  const { weight: weights = [], total=0} = testWeight
+  const { weight: weights = []} = testWeight
   return (
     <Modal
       title="编辑实验流量"
@@ -156,7 +156,7 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
         if (total > 100) {
           message.error("总流量超出")
         } else {
-          const changes = weights.filter(({ value, weight}) => editTest[value] && weight != editTest[value])
+          const changes = weights.filter(({ value, weight}) => editTest[value] && weight !== editTest[value])
           console.log()
           if (changes.length) {
             Promise.all(changes.map(({ value }) => editTestWeight(editTest.var_name, value, editTest[value]))).then(res => {
@@ -307,7 +307,7 @@ class Tests extends Component {
                       <Button onClick={e => {
                         dispatch({ type: 'common/save', payload: { editTest: {var_name: row.var_name} }})
                       }}>编辑流量</Button>
-                      {status === 'init' || status == 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
+                      {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
                       {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
                       {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
                     </Button.Group>

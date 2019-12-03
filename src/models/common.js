@@ -1,5 +1,4 @@
 import {
-  login,
   getLayers,
   addLayer,
   getLayerWeight,
@@ -12,7 +11,6 @@ import {
   getTargets,
   addTarget,
 } from '../services/common'
-import { message }  from 'antd'
 
 export default {
 
@@ -35,7 +33,7 @@ export default {
   },
 
   effects: {
-    *getLayers({ }, { put, call }) {
+    *getLayers({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getLayers)
       if (!err && data.code === 0) {
         yield put({ type: 'save', payload: { layers: data.layers } })
@@ -44,14 +42,14 @@ export default {
         }
       }
     },
-    *addLayer({ layer }, { put, call }) {
+    *addLayer({ layer }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(addLayer, layer)
       if (!err && data.code === 0) {
         yield put({ type: 'getLayers' })
         yield put({ type: 'save', payload: {showNewLayerForm: false}})
       }
     },
-    *getTests({ }, { put, call }) {
+    *getTests({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getTests)
       if (!err && data.code === 0) {
         const tests = data.tests.chunk(6).map(item => {
@@ -79,7 +77,7 @@ export default {
         yield put({ type: 'getTests' })
       }
     },
-    *getTargets({ }, { put, call }) {
+    *getTargets({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getTargets)
       if (!err && data.code === 0) {
         yield put({ type: 'save', payload: { targets: data.targets.chunk(2).map(item => {
@@ -150,6 +148,14 @@ export default {
       if (!err && data.code === 0) {
         yield put({ type: 'getTestWeight', var_name })
         yield put({ type: 'save', payload: {editTest: null} })
+        yield put({ type: 'save', payload: {showNewVersionForm: false}})
+      }
+    },
+    *addTarget({ var_name, target }, { put, call }) {
+      const { err, data } = yield call(addTarget, var_name, target)
+      if (!err && data.code === 0) {
+        yield put({ type: 'getTests' })
+        yield put({ type: 'save', payload: {showNewTargetForm: false}})
       }
     },
   },

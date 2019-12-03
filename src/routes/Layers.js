@@ -54,7 +54,7 @@ const NewLayerFrom = Form.create()(({ visible, dispatch, form }) => {
 })
 
 const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
-  const { weight: weights = [], total=0} = layerWeight
+  const { weight: weights = []} = layerWeight
   return (
     <Modal
       title="编辑层流量"
@@ -69,7 +69,7 @@ const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
         if (total > 100) {
           message.error("总流量超出")
         } else {
-          const changes = weights.filter(({ var_name, weight}) => editLayer[var_name] && weight != editLayer[var_name])
+          const changes = weights.filter(({ var_name, weight}) => editLayer[var_name] && weight !== editLayer[var_name])
           if (changes.length) {
             Promise.all(changes.map(({ var_name }) => editLayerWeight(editLayer.layer, var_name, editLayer[var_name]))).then(res => {
               console.log(res)
@@ -102,7 +102,7 @@ class Layers extends Component {
   }
   
   render() {
-    const { tests=[], layers=[], layerWeight={}, showNewLayerForm=false, editLayer, dispatch } = this.props
+    const { layers=[], layerWeight={}, showNewLayerForm=false, editLayer, dispatch } = this.props
     const dataSource = layers.map(layer => {
       return {
         name: layer,
