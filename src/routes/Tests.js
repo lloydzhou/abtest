@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, message } from 'antd';
+import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, Icon, message } from 'antd';
 import { editTestWeight } from '../services/common';
 
 const { Header, Content, Footer } = Layout;
@@ -201,7 +201,7 @@ class Tests extends Component {
   }
   
   render() {
-    const { tests=[], layers=[], layerWeight={}, testWeight={}, showNewTestFrom=false, editTest, dispatch } = this.props
+    const { tests=[], layers=[], layerWeight={}, testWeight={}, showNewTestFrom=false, editTest, targets=[], dispatch } = this.props
     const testAction = this.testAction.bind(this)
     return (
       <Layout className="layout">
@@ -258,6 +258,37 @@ class Tests extends Component {
                 render(var_name) {
                   const percent = testWeight[var_name] ? testWeight[var_name].total : 0
                   return <Progress percent={percent} />
+                }
+              },
+              {
+                title: '版本',
+                dataIndex: 'var_name',
+                key: 'version',
+                width: 180,
+                render(var_name) {
+                  const weights = testWeight[var_name] ? testWeight[var_name].weight : []
+                  return <div>
+                    {weights.map(({value, weight}) => {
+                      return <Progress style={{width: 100}} percent={weight} showInfo format={v => `${value}: ${v}%`}/>
+                    })}
+                    <br />
+                    <Button type="primary" size="small" icon="plus-circle" title="添加版本"/>
+                  </div>
+                }
+              },
+              {
+                title: '指标',
+                dataIndex: 'var_name',
+                key: 'target',
+                render(var_name) {
+                  const target = targets.filter(t => t.var_name === var_name)
+                  return <div>
+                    {target.map(({target_name}) => {
+                      return <div key={target_name}>{target_name}</div>
+                    })}
+                    <br />
+                    <Button type="primary" size="small" icon="plus-circle" title="添加指标"/>
+                  </div>
                 }
               },
               {
