@@ -39,8 +39,9 @@ export default {
     *getLayers({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getLayers)
       if (!err && data.code === 0) {
-        yield put({ type: 'save', payload: { layers: data.layers } })
-        for(const layer of data.layers) {
+        const layers = data.layers.length ? data.layers : []
+        yield put({ type: 'save', payload: { layers: layers } })
+        for(const layer of layers) {
           yield put({ type: 'getLayerWeight', layer })
         }
       }
@@ -55,12 +56,12 @@ export default {
     *getTests({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getTests)
       if (!err && data.code === 0) {
-        const tests = data.tests.chunk(6).map(item => {
+        const tests = data.tests.length ? data.tests.chunk(6).map(item => {
           const [var_name, name, layer, var_type, status, default_value] = item
           return {
             var_name, name, layer, var_type, status, default_value
           }
-        })
+        }) : [];
         yield put({ type: 'save', payload: { tests } })
         for(const test of tests) {
           yield put({ type: 'getTestWeight', var_name: test.var_name })
@@ -83,7 +84,8 @@ export default {
     *getTargets({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getTargets)
       if (!err && data.code === 0) {
-        yield put({ type: 'save', payload: { targets: data.targets.chunk(2).map(item => {
+        const targets = data.targets.length ? data.targets : []
+        yield put({ type: 'save', payload: { targets: targets.chunk(2).map(item => {
           const [target_name, var_name] = item
           return {
             target_name, var_name
@@ -95,7 +97,8 @@ export default {
       const { err, data } = yield call(getLayerWeight, layer)
       if (!err && data.code === 0) {
         const { layerWeight = {} } = yield select(s => s.common)
-        const weight = data.weight.length ? data.weight.chunk(2).map(item => {
+        const dataweight = data.weight.length ? data.weight : []
+        const weight = data.weight.length ? dataweight.chunk(2).map(item => {
           const [var_name, weight] = item
           return {
             var_name, weight: parseFloat(weight),
