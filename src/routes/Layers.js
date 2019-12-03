@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Slider, Progress, Form, Modal, Input, message } from 'antd';
+import { Layout, Menu, Breadcrumb, Table, Button, Slider, Progress, Form, Modal, Input, message, Dropdown, Icon } from 'antd';
 import { editLayerWeight } from '../services/common';
 
 const { Header, Content, Footer } = Layout;
@@ -102,7 +102,7 @@ class Layers extends Component {
   }
   
   render() {
-    const { layers=[], layerWeight={}, showNewLayerForm=false, editLayer, dispatch } = this.props
+    const { layers=[], layerWeight={}, showNewLayerForm=false, editLayer, env, dispatch } = this.props
     const dataSource = layers.map(layer => {
       return {
         name: layer,
@@ -126,7 +126,22 @@ class Layers extends Component {
         </Header>
         <Content style={{ padding: '0 50px' }}>
           <Breadcrumb style={{ margin: '16px 0' }}>
-            <Breadcrumb.Item>首页</Breadcrumb.Item>
+            <Breadcrumb.Item>
+              <Dropdown overlay={<Menu onClick={({key}) => {
+                dispatch({ type: 'common/changeEnv', env: key })
+              }}>
+                <Menu.Item key="dev">
+                  测试环境
+                </Menu.Item>
+                <Menu.Item key="production">
+                  正式环境
+                </Menu.Item>
+              </Menu>}>
+                <span className="ant-dropdown-link">
+                  {env === 'production' ? '正式环境' : '测试环境'}<Icon type="down" />
+                </span>
+              </Dropdown>
+            </Breadcrumb.Item>            
             <Breadcrumb.Item>流量层</Breadcrumb.Item>
           </Breadcrumb>
           <NewLayerFrom visible={showNewLayerForm} dispatch={dispatch} />

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, message } from 'antd';
+import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, message, Icon, Dropdown } from 'antd';
 import { editTestWeight } from '../services/common';
 
 const { Header, Content, Footer } = Layout;
@@ -320,7 +320,7 @@ class Tests extends Component {
   render() {
     const {
       tests=[], layers=[], layerWeight={}, testWeight={},
-      newTargetVarName, newVersion,
+      newTargetVarName, newVersion, env,
       showNewTestFrom=false, editTest, targets=[], dispatch
     } = this.props
     const testAction = this.testAction.bind(this)
@@ -340,7 +340,22 @@ class Tests extends Component {
         </Header>
         <Content style={{ padding: '0 50px' }}>
           <Breadcrumb style={{ margin: '16px 0' }}>
-            <Breadcrumb.Item>首页</Breadcrumb.Item>
+            <Breadcrumb.Item>
+              <Dropdown overlay={<Menu onClick={({key}) => {
+                dispatch({ type: 'common/changeEnv', env: key })
+              }}>
+                <Menu.Item key="dev">
+                  测试环境
+                </Menu.Item>
+                <Menu.Item key="production">
+                  正式环境
+                </Menu.Item>
+              </Menu>}>
+                <span className="ant-dropdown-link">
+                  {env === 'production' ? '正式环境' : '测试环境'}<Icon type="down" />
+                </span>
+              </Dropdown>
+            </Breadcrumb.Item>
             <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
           <NewTestFrom dispatch={dispatch} visible={showNewTestFrom} layers={layers} layerWeight={layerWeight} />

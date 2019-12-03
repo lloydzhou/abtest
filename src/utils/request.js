@@ -21,7 +21,14 @@ function checkStatus(response) {
 
 // export const host = process.env.NODE_ENV === 'production' ? window.location.origin : 'https://ab.quzhaopinapp.com';
 export const host = '';
-
+let env = localStorage.getItem('env') || 'dev'
+export const setEnv = (new_env) => {
+  env = new_env
+  localStorage.setItem('env', env)
+}
+export const getEnv = () => {
+  return env
+}
 
 /**
  * Requests a URL, returning a promise.
@@ -35,6 +42,7 @@ export default function request(url, options={}) {
   if (typeof newOptions.body === "object") {
     newOptions.body = JSON.stringify(newOptions.body)
   }
+  newOptions.headers = {...(newOptions.headers || {}), 'X-Env': getEnv()}
 
   return fetch(/^http/.test(url) ? url : `${host}${url}`, newOptions )
     .then(checkStatus)

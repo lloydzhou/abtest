@@ -11,12 +11,15 @@ import {
   getTargets,
   addTarget,
 } from '../services/common'
+import { getEnv, setEnv } from '../utils/request'
 
 export default {
 
   namespace: 'common',
 
-  state: {},
+  state: {
+    env: getEnv(),
+  },
 
   subscriptions: {
     setup({ dispatch, history }) {  // eslint-disable-line
@@ -155,6 +158,16 @@ export default {
       if (!err && data.code === 0) {
         yield put({ type: 'getTargets' })
         yield put({ type: 'save', payload: {newTargetVarName: false}})
+      }
+    },
+    *changeEnv({ env }, { put, select }) {
+      const { env: oldEnv } = yield select(s => s.common)
+      if (oldEnv !== env) {
+        setEnv(env)
+        yield put({ type: 'save', payload: {env}})
+        yield put({ type: 'getTests' })
+        yield put({ type: 'getLayers' })
+        yield put({ type: 'getTargets' })
       }
     },
   },
