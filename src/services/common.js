@@ -40,6 +40,12 @@ export function editTestWeight(var_name, val, weight) {
   });
 }
 
+export function testAction(var_name, action) {
+  return request(`/ab/test/action?var=${var_name}&action=${action}`, {
+    method: 'POST'
+  });
+}
+
 export function getTargets() {
   return request('/ab/targets');
 }

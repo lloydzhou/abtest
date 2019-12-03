@@ -76,6 +76,8 @@ const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
               dispatch({ type: 'common/getLayerWeight', layer: editLayer.layer })
               dispatch({ type: 'common/save', payload: {editLayer: null } })
             })
+          } else {
+            dispatch({ type: 'common/save', payload: {editLayer: null } })
           }      
         }
       }}

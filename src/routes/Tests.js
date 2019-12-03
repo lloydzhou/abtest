@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select } from 'antd';
-import { call } from 'redux-saga/effects';
+import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, message } from 'antd';
+import { editTestWeight } from '../services/common';
 
 const { Header, Content, Footer } = Layout;
 const FormItem = Form.Item;
@@ -139,15 +139,70 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
   )
 })
 
+
+const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
+  const { weight: weights = [], total=0} = testWeight
+  return (
+    <Modal
+      title="编辑实验流量"
+      visible={!!editTest}
+      key={editTest && editTest.var_name || 'TestWeightFrom'}
+      width={600}
+      onCancel={e => {
+        dispatch({ type: 'common/save', payload: {editTest: null } })
+      }}
+      onOk={e => {
+        const total = weights.map(({ value, weight}) => editTest[value] ? editTest[value] : weight).reduce((s, i) => s + i)
+        if (total > 100) {
+          message.error("总流量超出")
+        } else {
+          const changes = weights.filter(({ value, weight}) => editTest[value] && weight != editTest[value])
+          console.log()
+          if (changes.length) {
+            Promise.all(changes.map(({ value }) => editTestWeight(editTest.var_name, value, editTest[value]))).then(res => {
+              console.log(res)
+              dispatch({ type: 'common/getTestWeight', var_name: editTest.var_name })
+              dispatch({ type: 'common/save', payload: {editTest: null } })
+            })
+          }else{
+            dispatch({ type: 'common/save', payload: {editTest: null } })
+          } 
+        }
+      }}
+    >
+      {weights.map(({value, weight}) => {
+        return <Slider key={value} defaultValue={weight} onChange={(e) => {
+          // console.log(e, value, weight, total)
+          editTest[value] = e
+          dispatch({ type: 'save', payload: {editTest: {...editTest}}})
+          // return false
+        }} tooltipVisible tipFormatter={(v) => `${value}: ${v}`} />
+      })}
+    </Modal>
+  )
+}
+
 class Tests extends Component {
   constructor(props) {
     super(props);
     this.state = {
     }
   }
+
+  testAction(var_name, action, title) {
+    const { dispatch } = this.props
+    Modal.confirm({
+      title: title || '确定更新状态',
+      content: `确定将实验状态更新为：${action}`,
+      onOk() {
+        dispatch({ type: 'common/testAction', var_name, action })
+      }
+    })
+  }
   
   render() {
-    const { tests=[], layers=[], layerWeight={}, testWeight={}, showNewTestFrom=false, dispatch } = this.props
+    const { tests=[], layers=[], layerWeight={}, testWeight={}, showNewTestFrom=false, editTest, dispatch } = this.props
+    const testAction = this.testAction.bind(this)
     return (
       <Layout className="layout">
         <Header>
@@ -168,6 +223,7 @@ class Tests extends Component {
             <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
           <NewTestFrom dispatch={dispatch} visible={showNewTestFrom} layers={layers} layerWeight={layerWeight} />
+          <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest.var_name]}/>
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
             <Table dataSource={tests} rowKey={row => row.var_name} columns={[
               {
@@ -212,15 +268,17 @@ class Tests extends Component {
                 </div>),
                 dataIndex: 'status',
                 key: 'status',
-                render(status) {
+                render(status, row) {
                   return <div>
                     {status}
                     <br />
                     <Button.Group>
-                      <Button>编辑</Button>
-                      {status === 'init' ? <Button type="primary">启动</Button> : null}
-                      {status === 'running' ? <Button type="danger">停止</Button> : null}
-                      {status === 'stoped' ? <Button type="danger">删除</Button> : null}
+                      <Button onClick={e => {
+                        dispatch({ type: 'common/save', payload: { editTest: {var_name: row.var_name} }})
+                      }}>编辑流量</Button>
+                      {status === 'init' || status == 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
+                      {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
+                      {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
                     </Button.Group>
                   </div>
                 }

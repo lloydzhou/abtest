@@ -8,6 +8,7 @@ import {
   addTest,
   getTestWeight,
   editTestWeight,
+  testAction,
   getTargets,
   addTarget,
 } from '../services/common'
@@ -70,6 +71,12 @@ export default {
       if (!err && data.code === 0) {
         yield put({ type: 'getTests' })
         yield put({ type: 'save', payload: {showNewTestForm: false}})
+      }
+    },
+    *testAction({ var_name, action }, { put, call }) {
+      const { err, data } = yield call(testAction, var_name, action)
+      if (!err && data.code === 0) {
+        yield put({ type: 'getTests' })
       }
     },
     *getTargets({ }, { put, call }) {
