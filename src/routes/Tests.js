@@ -33,8 +33,8 @@ class Tests extends Component {
             <Breadcrumb.Item>首页</Breadcrumb.Item>
             <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
-          <div style={{ background: '#fff', padding: 24, minHeight: 280 }}>
-            <Table dataSource={tests} columns={[
+          <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
+            <Table dataSource={tests} rowKey={row => row.var_name} columns={[
               {
                 title: '流量层',
                 dataIndex: 'layer',
@@ -63,7 +63,7 @@ class Tests extends Component {
               {
                 title: '已分配流量',
                 dataIndex: 'var_name',
-                key: 'var_name',
+                key: 'weight',
                 render(var_name) {
                   const percent = testWeight[var_name] ? testWeight[var_name].total : 0
                   return <Progress percent={percent} />

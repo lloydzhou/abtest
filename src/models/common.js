@@ -25,10 +25,10 @@ export default {
         dispatch({ type: 'getTests' })
         dispatch({ type: 'getLayers' })
         dispatch({ type: 'getTargets' })
-        if ('/' === pathname) {
-          dispatch({ type: 'getLayerWeight', layer: 'layer1' })
-          dispatch({ type: 'getTestWeight', var_name: 'isAB' })
-        }
+        // if ('/' === pathname) {
+        //   dispatch({ type: 'getLayerWeight', layer: 'layer1' })
+        //   dispatch({ type: 'getTestWeight', var_name: 'isAB' })
+        // }
       })
     },
   },
@@ -41,6 +41,13 @@ export default {
         for(const layer of data.layers) {
           yield put({ type: 'getLayerWeight', layer })
         }
+      }
+    },
+    *addLayer({ layer }, { put, call }) {
+      const { err, data } = yield call(addLayer, layer)
+      if (!err && data.code === 0) {
+        yield put({ type: 'getLayers' })
+        yield put({ type: 'save', payload: {showNewLayerForm: false}})
       }
     },
     *getTests({ }, { put, call }) {
@@ -58,6 +65,13 @@ export default {
         }
       }
     },
+    *addTest({ layer, layer_weight, var_name, test_name, type, default_value }, { put, call }) {
+      const { err, data } = yield call(addTest, layer, layer_weight, var_name, test_name, type, default_value)
+      if (!err && data.code === 0) {
+        yield put({ type: 'getTests' })
+        yield put({ type: 'save', payload: {showNewTestForm: false}})
+      }
+    },
     *getTargets({ }, { put, call }) {
       const { err, data } = yield call(getTargets)
       if (!err && data.code === 0) {
@@ -73,12 +87,12 @@ export default {
       const { err, data } = yield call(getLayerWeight, layer)
       if (!err && data.code === 0) {
         const { layerWeight = {} } = yield select(s => s.common)
-        const weight = data.weight.chunk(2).map(item => {
+        const weight = data.weight.length ? data.weight.chunk(2).map(item => {
           const [var_name, weight] = item
           return {
             var_name, weight: parseFloat(weight),
           }
-        })
+        }) : [];
         yield put({
           type: 'save',
           payload: {
@@ -93,16 +107,23 @@ export default {
         })
       }
     },
+    *editLayerWeight({ layer, var_name, weight }, { put, call }) {
+      const { err, data } = yield call(editLayerWeight, layer, var_name, weight)
+      if (!err && data.code === 0) {
+        yield put({ type: 'getLayerWeight', layer })
+        yield put({ type: 'save', payload: {editLayer: null} })
+      }
+    },
     *getTestWeight({ var_name }, { put, call, select }) {
       const { err, data } = yield call(getTestWeight, var_name)
       if (!err && data.code === 0) {
         const { testWeight = {} } = yield select(s => s.common)
-        const weight = data.weight.chunk(2).map(item => {
+        const weight = data.weight.length ? data.weight.chunk(2).map(item => {
           const [value, weight] = item
           return {
             value, weight: parseFloat(weight),
           }
-        })
+        }) : [];
         yield put({
           type: 'save',
           payload: {
@@ -115,6 +136,13 @@ export default {
             }
           }
         })
+      }
+    },
+    *editTestWeight({ var_name, value, weight }, { put, call }) {
+      const { err, data } = yield call(editTestWeight, var_name, value, weight)
+      if (!err && data.code === 0) {
+        yield put({ type: 'getTestWeight', var_name })
+        yield put({ type: 'save', payload: {editTest: null} })
       }
     },
   },
