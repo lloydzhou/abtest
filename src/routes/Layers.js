@@ -83,7 +83,7 @@ const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
       }}
     >
       {weights.map(({var_name, name, weight}) => {
-        return <Slider key={var_name} defaultValue={weight} onChange={(e) => {
+        return <Slider key={var_name} style={{marginBottom: 50}} defaultValue={weight} onChange={(e) => {
           // console.log(e, var_name, weight, total)
           editLayer[var_name] = e
           dispatch({ type: 'save', payload: {editLayer: {...editLayer}}})

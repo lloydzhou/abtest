@@ -59,7 +59,7 @@ export default {
           if (!layerWeight[layer]) {
             layerWeight[layer] = {weight: [], total: 0}
           }
-          layerWeight[layer].weight.push({var_name, name, weight})
+          layerWeight[layer].weight.push({var_name, name, weight: parseFloat(weight)})
           layerWeight[layer].total += weight
         }
         yield put({ type: 'save', payload: { tests, layerWeight } })
