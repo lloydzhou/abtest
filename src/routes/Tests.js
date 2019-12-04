@@ -348,18 +348,20 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       }
     })
   }
-  const dataSource = rateVersions.chunk(rateTargets.length * 2 + 5).map(item => {
+  const preIndex = 6
+  const dataSource = rateVersions.chunk(rateTargets.length * 2 + preIndex).map(item => {
     // eslint-disable-next-line
-    const [value, var_name, name, pv, uv] = item
+    const [value, weight, var_name, name, pv, uv] = item
     const res = {
+      value, weight, var_name,
       version: name,
       pv: parseFloat(pv) || 0,
       uv: parseFloat(uv) || 0,
     } 
     for (let index = 0; index < rateTargets.length; index++) {
       res[rateTargets[index]] = {
-        count: parseFloat(item[5 + index * 2]) || 0,
-        user: parseFloat(item[1 + 5 + index * 2]) || 0,
+        count: parseFloat(item[preIndex + index * 2]) || 0,
+        user: parseFloat(item[1 + preIndex + index * 2]) || 0,
       }
     }
     return res
