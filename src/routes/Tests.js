@@ -170,13 +170,13 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
         }
       }}
     >
-      {weights.map(({value, weight}) => {
-        return <Slider key={value} defaultValue={weight} onChange={(e) => {
+      {weights.map(({value, name, weight}) => {
+        return <Slider style={{marginBottom: 50}} key={value} defaultValue={weight} onChange={(e) => {
           // console.log(e, value, weight, total)
           editTest[value] = e
           dispatch({ type: 'save', payload: {editTest: {...editTest}}})
           // return false
-        }} tooltipVisible tipFormatter={(v) => `${value}: ${v}`} />
+        }} tooltipVisible tipFormatter={(v) => `${name}(${value}): ${v}`} />
       })}
     </Modal>
   )
@@ -244,7 +244,11 @@ const NewVersionFrom = Form.create()(({ newVersion, dispatch, testWeight, form }
         e.preventDefault();
         form.validateFields((err, values) => {
           if (!err) {
-            dispatch({ type: 'common/editTestWeight', var_name: newVersion.var_name, value: values.value, weight: values.weight })
+            const {value, weight, name=''} = values
+            dispatch({
+              type: 'common/editTestWeight', var_name: newVersion.var_name,
+              value, weight, name: name || value,
+            })
           }
         })
 
@@ -287,6 +291,17 @@ const NewVersionFrom = Form.create()(({ newVersion, dispatch, testWeight, form }
             ],
           })(
             <Slider tooltipVisible />
+          )}
+        </FormItem>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="版本名称"
+        >
+          {getFieldDecorator('name', {
+            rules: [],
+          })(
+            <Input />
           )}
         </FormItem>
         <FormItem
@@ -406,8 +421,10 @@ class Tests extends Component {
                 render(var_name, row) {
                   const weights = testWeight[var_name] ? testWeight[var_name].weight : []
                   return <div>
-                    {weights.map(({value, weight}) => {
-                      return <Progress key={value} style={{width: 100}} percent={weight} format={v => `${value}: ${v}%`}/>
+                    {weights.map(({value, name, weight}) => {
+                      return <Progress key={value} style={{width: 100}} percent={weight} format={v => {
+                        return name === value ? `${value}: ${v}%` : `${name}(${value}): ${v}%`
+                      }}/>
                     })}
                     <br />
                     <Button.Group>

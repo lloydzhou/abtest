@@ -82,13 +82,13 @@ const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
         }
       }}
     >
-      {weights.map(({var_name, weight}) => {
+      {weights.map(({var_name, name, weight}) => {
         return <Slider key={var_name} defaultValue={weight} onChange={(e) => {
           // console.log(e, var_name, weight, total)
           editLayer[var_name] = e
           dispatch({ type: 'save', payload: {editLayer: {...editLayer}}})
           // return false
-        }} tooltipVisible tipFormatter={(value) => `${var_name}: ${value}`} />
+        }} tooltipVisible tipFormatter={(value) => `${name}(${var_name}): ${value}`} />
       })}
     </Modal>
   )
