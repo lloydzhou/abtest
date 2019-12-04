@@ -10,10 +10,6 @@ export function addLayer(layer) {
   });
 }
 
-export function getLayerWeight(layer) {
-  return request(`/ab/layer/weight?layer=${layer}`);
-}
-
 export function editLayerWeight(layer, var_name, weight) {
   return request(`/ab/layer/weight?layer=${layer}&var=${var_name}&weight=${weight}`, {
     method: 'POST'
@@ -30,14 +26,14 @@ export function addTest(layer, layer_weight, var_name, test_name, type, default_
   });
 }
 
-export function getTestWeight(var_name) {
-  return request(`/ab/test/weight?var=${var_name}`);
-}
-
-export function editTestWeight(var_name, val, weight) {
-  return request(`/ab/test/weight?var=${var_name}&val=${val}&weight=${weight}`, {
+export function editTestWeight(var_name, val, weight, name) {
+  return request(`/ab/test/weight?var=${var_name}&val=${val}&weight=${weight}&name=${name||val}`, {
     method: 'POST'
   });
+}
+
+export function getVersions() {
+  return request('/ab/versions');
 }
 
 export function testAction(var_name, action) {
@@ -54,5 +50,9 @@ export function addTarget(var_name, target) {
   return request(`/ab/target/add?var=${var_name}&target=${target}`, {
     method: 'POST'
   });
+}
+
+export function getTestRate(var_name) {
+  return request(`/ab/test/rate?var=${var_name}`);
 }
 

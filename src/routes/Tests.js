@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, message, Icon, Dropdown } from 'antd';
+import {
+  Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider,
+  Form, Modal, Select, message, Icon, Dropdown, Tooltip,
+} from 'antd';
 import { editTestWeight } from '../services/common';
 
 const { Header, Content, Footer } = Layout;
@@ -26,7 +29,7 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
         e.preventDefault();
         form.validateFields((err, values) => {
           //layer, layer_weight, var_name, test_name, var_type, default_value
-          console.log(err, values)
+          // console.log(err, values)
           if (!err) {
             dispatch({ type: 'common/addTest', ...values })
           }
@@ -56,9 +59,9 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
             rules: [
               { validator: (rule, value, callback) => {
                 const layer = form.getFieldValue('layer')
-                const weight = layerWeight[layer]
-                console.log(rule, value, form, layer)
-                if (layer && weight) {
+                const weight = layerWeight[layer] || {total: 0}
+                // console.log(rule, value, form, layer)
+                if (layer) {
                   if (value <= 100 - weight.total) {
                     return callback()
                   } else {
@@ -67,7 +70,7 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
                 }else{
                   callback('请选择正确地流量层')
                 }
-                console.log(layer, weight)
+                // console.log(layer, weight)
               }},
             ],
           })(
@@ -146,7 +149,7 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
     <Modal
       title="编辑实验流量"
       visible={!!editTest}
-      key={editTest && editTest.var_name || 'TestWeightFrom'}
+      key={editTest && editTest._var_name || 'TestWeightFrom'}
       width={600}
       onCancel={e => {
         dispatch({ type: 'common/save', payload: {editTest: null } })
@@ -157,11 +160,12 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
           message.error("总流量超出")
         } else {
           const changes = weights.filter(({ value, weight}) => editTest[value] && weight !== editTest[value])
-          console.log()
           if (changes.length) {
-            Promise.all(changes.map(({ value }) => editTestWeight(editTest.var_name, value, editTest[value]))).then(res => {
-              console.log(res)
-              dispatch({ type: 'common/getTestWeight', var_name: editTest.var_name })
+            Promise.all(changes.map(({ value, name }) => editTestWeight(
+              editTest._var_name, value, editTest[value], name,
+            ))).then(res => {
+              // console.log(res)
+              dispatch({ type: 'common/getVersions' })
               dispatch({ type: 'common/save', payload: {editTest: null } })
             })
           }else{
@@ -170,13 +174,13 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
         }
       }}
     >
-      {weights.map(({value, weight}) => {
-        return <Slider key={value} defaultValue={weight} onChange={(e) => {
+      {weights.map(({value, name, weight}) => {
+        return <Slider style={{marginBottom: 50}} key={value} defaultValue={weight} onChange={(e) => {
           // console.log(e, value, weight, total)
           editTest[value] = e
           dispatch({ type: 'save', payload: {editTest: {...editTest}}})
           // return false
-        }} tooltipVisible tipFormatter={(v) => `${value}: ${v}`} />
+        }} tooltipVisible tipFormatter={(v) => `${name}(${value}): ${v}`} />
       })}
     </Modal>
   )
@@ -244,7 +248,11 @@ const NewVersionFrom = Form.create()(({ newVersion, dispatch, testWeight, form }
         e.preventDefault();
         form.validateFields((err, values) => {
           if (!err) {
-            dispatch({ type: 'common/editTestWeight', var_name: newVersion.var_name, value: values.value, weight: values.weight })
+            const {value, weight, name=''} = values
+            dispatch({
+              type: 'common/editTestWeight', var_name: newVersion.var_name,
+              value, weight, name: name || value,
+            })
           }
         })
 
@@ -290,6 +298,17 @@ const NewVersionFrom = Form.create()(({ newVersion, dispatch, testWeight, form }
           )}
         </FormItem>
         <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="版本名称"
+        >
+          {getFieldDecorator('name', {
+            rules: [],
+          })(
+            <Input />
+          )}
+        </FormItem>
+        <FormItem
           wrapperCol={{ span: 4, offset: 20 }}
         >
           <Button type="primary" htmlType="submit">保存</Button>
@@ -298,6 +317,76 @@ const NewVersionFrom = Form.create()(({ newVersion, dispatch, testWeight, form }
     </Modal>
   )
 })
+
+const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => {
+  const columns = [
+    {
+      title: '版本',
+      dataIndex: 'version',
+      key: 'version',
+      render(version, row) {
+        return `${version}(${row.weight}%)`
+      }
+    },
+    {
+      title: '实验PV',
+      dataIndex: 'pv',
+      key: 'pv',
+    },
+    {
+      title: '实验UV',
+      dataIndex: 'uv',
+      key: 'uv',
+    },
+  ]
+  for (const target of rateTargets) {
+    columns.push({
+      title: target,
+      dataIndex: target,
+      key: target,
+      render(value, row) {
+        const { count, user } = value
+        const { pv, uv } = row
+        return `count: ${count}, user: ${user}, pv: ${pv}, uv: ${uv}`
+      }
+    })
+  }
+  const preIndex = 6
+  const dataSource = rateVersions.chunk(rateTargets.length * 2 + preIndex).map(item => {
+    // eslint-disable-next-line
+    const [value, var_name, weight, name, pv, uv] = item
+    const res = {
+      value, var_name,
+      version: name,
+      weight: parseFloat(weight),
+      pv: parseFloat(pv) || 0,
+      uv: parseFloat(uv) || 0,
+    } 
+    for (let index = 0; index < rateTargets.length; index++) {
+      res[rateTargets[index]] = {
+        count: parseFloat(item[preIndex + index * 2]) || 0,
+        user: parseFloat(item[1 + preIndex + index * 2]) || 0,
+      }
+    }
+    return res
+  })
+  return (
+    <Modal
+      title={`${showTestRate ? showTestRate.name : '-'}转化率`}
+      visible={!!showTestRate}
+      key={showTestRate && showTestRate.name || 'TestRateInfo'}
+      width={600}
+      onCancel={e => {
+        dispatch({ type: 'common/save', payload: {showTestRate: false } })
+      }}
+      footer={<Button onClick={e => {
+        dispatch({ type: 'common/save', payload: {showTestRate: false } })
+      }}>关闭</Button>}
+    >
+      <Table dataSource={dataSource} rowKey={row => row.version} columns={columns} pagination={false} />
+    </Modal>
+  )
+}
 
 class Tests extends Component {
   constructor(props) {
@@ -319,8 +408,9 @@ class Tests extends Component {
   
   render() {
     const {
-      tests=[], layers=[], layerWeight={}, testWeight={},
+      tests=[], layers=[], versions=[], layerWeight={}, testWeight={},
       newTargetVarName, newVersion, env,
+      showTestRate, rateTargets=[], rateVersions=[],
       showNewTestForm=false, editTest, targets=[], dispatch
     } = this.props
     const testAction = this.testAction.bind(this)
@@ -359,9 +449,10 @@ class Tests extends Component {
             <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
           <NewTestFrom dispatch={dispatch} visible={showNewTestForm} layers={layers} layerWeight={layerWeight} />
-          <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest.var_name]}/>
+          <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest._var_name]}/>
           <NewTargetFrom newTargetVarName={newTargetVarName} dispatch={dispatch} />
           <NewVersionFrom newVersion={newVersion} testWeight={testWeight} dispatch={dispatch} />
+          <TestRateInfo showTestRate={showTestRate} rateTargets={rateTargets} rateVersions={rateVersions} dispatch={dispatch} />
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
             <Table dataSource={tests} rowKey={row => row.var_name} columns={[
               {
@@ -384,35 +475,24 @@ class Tests extends Component {
                 dataIndex: 'var_type',
                 key: 'var_type',
               },
+              // {
+              //   title: '默认值',
+              //   dataIndex: 'default_value',
+              //   key: 'default_value',
+              // },
               {
-                title: '默认值',
-                dataIndex: 'default_value',
-                key: 'default_value',
-              },
-              {
-                title: '已分配流量',
+                title: '流量',
                 dataIndex: 'var_name',
                 key: 'weight',
-                render(var_name) {
-                  const percent = testWeight[var_name] ? testWeight[var_name].total : 0
-                  return <Progress percent={percent} />
-                }
-              },
-              {
-                title: '版本',
-                dataIndex: 'var_name',
-                key: 'version',
-                width: 180,
                 render(var_name, row) {
                   const weights = testWeight[var_name] ? testWeight[var_name].weight : []
+                  const percent = testWeight[var_name] ? testWeight[var_name].total : 0
                   return <div>
-                    {weights.map(({value, weight}) => {
-                      return <Progress key={value} style={{width: 100}} percent={weight} format={v => `${value}: ${v}%`}/>
-                    })}
-                    <br />
-                    <Button.Group>
+                    <div>
+                    共{weights.length}个版本已分配流量{percent}:
+                    <Button.Group style={{float: 'right'}}>
                       <Button type="primary" size="small" icon="edit" onClick={e => {
-                        dispatch({ type: 'common/save', payload: { editTest: {var_name: row.var_name} }})
+                        dispatch({ type: 'common/save', payload: { editTest: {_var_name: row.var_name} }})
                       }} title="编辑版本流量"/>
                       <Button type="primary" size="small" icon="plus-circle" title="添加版本" onClick={e => {
                         dispatch({
@@ -427,6 +507,18 @@ class Tests extends Component {
                         })
                       }}/>
                     </Button.Group>
+                    </div>
+                    <Progress percent={percent} />
+                    <div>各版本流量分配情况：</div>
+                    {weights.map(({value, name, weight}) => {
+                      const current_version = versions.find(i => i.var_name === row.var_name && i.value === value)
+                      return <Tooltip title={
+                        (name === value ? `${value}: ${weight}%` : `${name}(${value}): ${weight}%`) +
+                        (current_version ? `, pv: ${current_version.pv || '-'}, uv: ${current_version.uv || '-'}` : '')
+                      } key={value}>
+                        <Progress percent={weight} />
+                      </Tooltip>
+                    })}
                   </div>
                 }
               },
@@ -437,13 +529,17 @@ class Tests extends Component {
                 render(var_name, row) {
                   const target = targets.filter(t => t.var_name === var_name)
                   return <div>
-                    {target.map(({target_name}) => {
-                      return <div key={target_name}>{target_name}</div>
+                    <div>共{target.length}个指标:
+                      <Button type="primary" size="small" icon="plus-circle" title="添加指标" style={{marginLeft: 30}} onClick={e => {
+                        dispatch({ type: 'common/save', payload: { newTargetVarName: row.var_name }})
+                      }}/>
+                    </div>
+                    {target.map(({target_name, count, rate}) => {
+                      return <div key={target_name}>
+                        {target_name}
+                        {count ? rate ? ` (${count}: ${rate}%)` : ` (${count})`: ' -'}
+                      </div>
                     })}
-                    <br />
-                    <Button type="primary" size="small" icon="plus-circle" title="添加指标" onClick={e => {
-                      dispatch({ type: 'common/save', payload: { newTargetVarName: row.var_name }})
-                    }}/>
                   </div>
                 }
               },
@@ -459,13 +555,18 @@ class Tests extends Component {
                   return <div>
                     {status}
                     <br />  
-                    {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
-                    {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
-                    {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
+                    <Button.Group>
+                      {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
+                      {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
+                      {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
+                      <Button type="primary" icon="exclamation-circle" onClick={e => {
+                        dispatch({ type: 'common/getTestRate', var_name: row.var_name, name: row.name })
+                      }}/>
+                    </Button.Group>
                   </div>
                 }
               },
-            ]} pagination={false} />;
+            ]} pagination={false} />
           </div>
         </Content>
         <Footer style={{ textAlign: 'center' }}>quzhaopinapp.com ©2019</Footer>

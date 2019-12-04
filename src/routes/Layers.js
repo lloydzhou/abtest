@@ -59,7 +59,7 @@ const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
     <Modal
       title="编辑层流量"
       visible={!!editLayer}
-      key={editLayer && editLayer.layer || 'LayerWeightFrom'}
+      key={editLayer && editLayer._layer || 'LayerWeightFrom'}
       width={600}
       onCancel={e => {
         dispatch({ type: 'common/save', payload: {editLayer: null } })
@@ -71,9 +71,9 @@ const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
         } else {
           const changes = weights.filter(({ var_name, weight}) => editLayer[var_name] && weight !== editLayer[var_name])
           if (changes.length) {
-            Promise.all(changes.map(({ var_name }) => editLayerWeight(editLayer.layer, var_name, editLayer[var_name]))).then(res => {
+            Promise.all(changes.map(({ var_name }) => editLayerWeight(editLayer._layer, var_name, editLayer[var_name]))).then(res => {
               console.log(res)
-              dispatch({ type: 'common/getLayerWeight', layer: editLayer.layer })
+              dispatch({ type: 'common/getTests' })
               dispatch({ type: 'common/save', payload: {editLayer: null } })
             })
           } else {
@@ -82,13 +82,13 @@ const LayerWeightFrom = ({ editLayer, dispatch, layerWeight={} }) => {
         }
       }}
     >
-      {weights.map(({var_name, weight}) => {
+      {weights.map(({var_name, name, weight}) => {
         return <Slider key={var_name} defaultValue={weight} onChange={(e) => {
           // console.log(e, var_name, weight, total)
           editLayer[var_name] = e
           dispatch({ type: 'save', payload: {editLayer: {...editLayer}}})
           // return false
-        }} tooltipVisible tipFormatter={(value) => `${var_name}: ${value}`} />
+        }} tooltipVisible tipFormatter={(value) => `${name}(${var_name}): ${value}`} />
       })}
     </Modal>
   )
@@ -145,7 +145,7 @@ class Layers extends Component {
             <Breadcrumb.Item>流量层</Breadcrumb.Item>
           </Breadcrumb>
           <NewLayerFrom visible={showNewLayerForm} dispatch={dispatch} />
-          <LayerWeightFrom editLayer={editLayer} dispatch={dispatch} layerWeight={layerWeight[editLayer && editLayer.layer]}/>
+          <LayerWeightFrom editLayer={editLayer} dispatch={dispatch} layerWeight={layerWeight[editLayer && editLayer._layer]}/>
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
             <Table dataSource={dataSource} rowKey={row => row.name} columns={[
               {
@@ -174,7 +174,7 @@ class Layers extends Component {
                     <Link to="/tests">添加实验</Link>
                     {row.var_count
                     ? <Button style={{marginLeft: '20px'}} onClick={e => {
-                      dispatch({ type: 'common/save', payload: { editLayer: {layer} }})
+                      dispatch({ type: 'common/save', payload: { editLayer: {_layer: layer} }})
                     }}>编辑</Button>
                     : null }
                   </div>
