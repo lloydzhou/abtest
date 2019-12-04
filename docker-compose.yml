@@ -13,11 +13,3 @@ services:
     ports:
       - "0.0.0.0:8011:80"
 
-  crontab:
-    image: ab-crontab
-    volumes:
-      - ./scripts/crontab:/etc/cron.d/root
-      - ./scripts:/scripts
-    links:
-      - redis
-
