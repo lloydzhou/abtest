@@ -85,12 +85,18 @@ export default {
       const { err, data } = yield call(getTargets)
       if (!err && data.code === 0) {
         const targets = data.targets.length ? data.targets : []
-        yield put({ type: 'save', payload: { targets: targets.chunk(2).map(item => {
-          const [target_name, var_name] = item
-          return {
-            target_name, var_name
+        yield put({
+          type: 'save',
+          payload: {
+            targets: targets.chunk(4).map(item => {
+              const [target_name, var_name, count, rate] = item
+              return {
+                target_name, var_name,
+                count, rate,
+              }
+            })
           }
-        }) } })
+        })
       }
     },
     *getLayerWeight({ layer }, { put, call, select }) {
