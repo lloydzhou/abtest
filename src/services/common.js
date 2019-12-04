@@ -27,7 +27,7 @@ export function addTest(layer, layer_weight, var_name, test_name, type, default_
 }
 
 export function editTestWeight(var_name, val, weight, name) {
-  return request(`/ab/test/weight?var=${var_name}&val=${val}&weight=${weight}&name=${name}`, {
+  return request(`/ab/test/weight?var=${var_name}&val=${val}&weight=${weight}&name=${name||val}`, {
     method: 'POST'
   });
 }

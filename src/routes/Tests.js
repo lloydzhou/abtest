@@ -146,7 +146,7 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
     <Modal
       title="编辑实验流量"
       visible={!!editTest}
-      key={editTest && editTest.var_name || 'TestWeightFrom'}
+      key={editTest && editTest._var_name || 'TestWeightFrom'}
       width={600}
       onCancel={e => {
         dispatch({ type: 'common/save', payload: {editTest: null } })
@@ -159,9 +159,11 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
           const changes = weights.filter(({ value, weight}) => editTest[value] && weight !== editTest[value])
           console.log()
           if (changes.length) {
-            Promise.all(changes.map(({ value }) => editTestWeight(editTest.var_name, value, editTest[value]))).then(res => {
+            Promise.all(changes.map(({ value, name }) => editTestWeight(
+              editTest._var_name, value, editTest[value], name,
+            ))).then(res => {
               console.log(res)
-              dispatch({ type: 'common/getTestWeight', var_name: editTest.var_name })
+              dispatch({ type: 'common/getVersions' })
               dispatch({ type: 'common/save', payload: {editTest: null } })
             })
           }else{
@@ -374,7 +376,7 @@ class Tests extends Component {
             <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
           <NewTestFrom dispatch={dispatch} visible={showNewTestForm} layers={layers} layerWeight={layerWeight} />
-          <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest.var_name]}/>
+          <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest._var_name]}/>
           <NewTargetFrom newTargetVarName={newTargetVarName} dispatch={dispatch} />
           <NewVersionFrom newVersion={newVersion} testWeight={testWeight} dispatch={dispatch} />
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
@@ -429,7 +431,7 @@ class Tests extends Component {
                     <br />
                     <Button.Group>
                       <Button type="primary" size="small" icon="edit" onClick={e => {
-                        dispatch({ type: 'common/save', payload: { editTest: {var_name: row.var_name} }})
+                        dispatch({ type: 'common/save', payload: { editTest: {_var_name: row.var_name} }})
                       }} title="编辑版本流量"/>
                       <Button type="primary" size="small" icon="plus-circle" title="添加版本" onClick={e => {
                         dispatch({
