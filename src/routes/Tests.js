@@ -401,11 +401,11 @@ class Tests extends Component {
                 dataIndex: 'var_type',
                 key: 'var_type',
               },
-              {
-                title: '默认值',
-                dataIndex: 'default_value',
-                key: 'default_value',
-              },
+              // {
+              //   title: '默认值',
+              //   dataIndex: 'default_value',
+              //   key: 'default_value',
+              // },
               {
                 title: '已分配流量',
                 dataIndex: 'var_name',
