@@ -68,6 +68,7 @@ export default {
       const { err, data } = yield call(addTest, layer, layer_weight, var_name, test_name, var_type, default_value)
       if (!err && data.code === 0) {
         yield put({ type: 'getTests' })
+        yield put({ type: 'getVersions' })
         yield put({ type: 'save', payload: {showNewTestForm: false}})
       }
     },

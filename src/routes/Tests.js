@@ -56,9 +56,9 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
             rules: [
               { validator: (rule, value, callback) => {
                 const layer = form.getFieldValue('layer')
-                const weight = layerWeight[layer]
+                const weight = layerWeight[layer] || {total: 0}
                 console.log(rule, value, form, layer)
-                if (layer && weight) {
+                if (layer) {
                   if (value <= 100 - weight.total) {
                     return callback()
                   } else {
