@@ -52,3 +52,7 @@ export function addTarget(var_name, target) {
   });
 }
 
+export function getTestRate(var_name) {
+  return request(`/ab/test/rate?var=${var_name}`);
+}
+

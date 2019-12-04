@@ -5,6 +5,7 @@ import {
   getTests,
   addTest,
   editTestWeight,
+  getTestRate,
   getVersions,
   testAction,
   getTargets,
@@ -70,6 +71,19 @@ export default {
         yield put({ type: 'getTests' })
         yield put({ type: 'getVersions' })
         yield put({ type: 'save', payload: {showNewTestForm: false}})
+      }
+    },
+    *getTestRate({ var_name, name }, { put, call }) {
+      const { err, data } = yield call(getTestRate, var_name)
+      if (!err && data.code === 0) {
+        yield put({
+          type: 'save',
+          payload: {
+            showTestRate: {var_name, name: name || var_name},
+            rateTargets: data.targets,
+            rateVersions: data.versions,
+          }
+        })
       }
     },
     *testAction({ var_name, action }, { put, call }) {

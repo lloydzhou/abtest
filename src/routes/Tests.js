@@ -29,7 +29,7 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
         e.preventDefault();
         form.validateFields((err, values) => {
           //layer, layer_weight, var_name, test_name, var_type, default_value
-          console.log(err, values)
+          // console.log(err, values)
           if (!err) {
             dispatch({ type: 'common/addTest', ...values })
           }
@@ -60,7 +60,7 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
               { validator: (rule, value, callback) => {
                 const layer = form.getFieldValue('layer')
                 const weight = layerWeight[layer] || {total: 0}
-                console.log(rule, value, form, layer)
+                // console.log(rule, value, form, layer)
                 if (layer) {
                   if (value <= 100 - weight.total) {
                     return callback()
@@ -70,7 +70,7 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
                 }else{
                   callback('请选择正确地流量层')
                 }
-                console.log(layer, weight)
+                // console.log(layer, weight)
               }},
             ],
           })(
@@ -160,12 +160,11 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
           message.error("总流量超出")
         } else {
           const changes = weights.filter(({ value, weight}) => editTest[value] && weight !== editTest[value])
-          console.log()
           if (changes.length) {
             Promise.all(changes.map(({ value, name }) => editTestWeight(
               editTest._var_name, value, editTest[value], name,
             ))).then(res => {
-              console.log(res)
+              // console.log(res)
               dispatch({ type: 'common/getVersions' })
               dispatch({ type: 'common/save', payload: {editTest: null } })
             })
@@ -319,6 +318,70 @@ const NewVersionFrom = Form.create()(({ newVersion, dispatch, testWeight, form }
   )
 })
 
+const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => {
+  const columns = [
+    {
+      title: '版本',
+      dataIndex: 'version',
+      key: 'version',
+    },
+    {
+      title: '实验PV',
+      dataIndex: 'pv',
+      key: 'pv',
+    },
+    {
+      title: '实验UV',
+      dataIndex: 'uv',
+      key: 'uv',
+    },
+  ]
+  for (const target of rateTargets) {
+    columns.push({
+      title: target,
+      dataIndex: target,
+      key: target,
+      render(value, row) {
+        const { count, user } = value
+        const { pv, uv } = row
+        return `count: ${count}, user: ${user}, pv: ${pv}, uv: ${uv}`
+      }
+    })
+  }
+  const dataSource = rateVersions.chunk(rateTargets.length * 2 + 5).map(item => {
+    // eslint-disable-next-line
+    const [value, var_name, name, pv, uv] = item
+    const res = {
+      version: name,
+      pv: parseFloat(pv) || 0,
+      uv: parseFloat(uv) || 0,
+    } 
+    for (let index = 0; index < rateTargets.length; index++) {
+      res[rateTargets[index]] = {
+        count: parseFloat(item[5 + index * 2]) || 0,
+        user: parseFloat(item[1 + 5 + index * 2]) || 0,
+      }
+    }
+    return res
+  })
+  return (
+    <Modal
+      title={`${showTestRate ? showTestRate.name : '-'}转化率`}
+      visible={!!showTestRate}
+      key={showTestRate && showTestRate.name || 'TestRateInfo'}
+      width={600}
+      onCancel={e => {
+        dispatch({ type: 'common/save', payload: {showTestRate: false } })
+      }}
+      footer={<Button onClick={e => {
+        dispatch({ type: 'common/save', payload: {showTestRate: false } })
+      }}>关闭</Button>}
+    >
+      <Table dataSource={dataSource} rowKey={row => row.version} columns={columns} pagination={false} />
+    </Modal>
+  )
+}
+
 class Tests extends Component {
   constructor(props) {
     super(props);
@@ -341,6 +404,7 @@ class Tests extends Component {
     const {
       tests=[], layers=[], versions=[], layerWeight={}, testWeight={},
       newTargetVarName, newVersion, env,
+      showTestRate, rateTargets=[], rateVersions=[],
       showNewTestForm=false, editTest, targets=[], dispatch
     } = this.props
     const testAction = this.testAction.bind(this)
@@ -382,6 +446,7 @@ class Tests extends Component {
           <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest._var_name]}/>
           <NewTargetFrom newTargetVarName={newTargetVarName} dispatch={dispatch} />
           <NewVersionFrom newVersion={newVersion} testWeight={testWeight} dispatch={dispatch} />
+          <TestRateInfo showTestRate={showTestRate} rateTargets={rateTargets} rateVersions={rateVersions} dispatch={dispatch} />
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
             <Table dataSource={tests} rowKey={row => row.var_name} columns={[
               {
@@ -440,7 +505,6 @@ class Tests extends Component {
                     <Progress percent={percent} />
                     <div>各版本流量分配情况：</div>
                     {weights.map(({value, name, weight}) => {
-                      console.log(versions)
                       const current_version = versions.find(i => i.var_name === row.var_name && i.value === value)
                       return <Tooltip title={
                         (name === value ? `${value}: ${weight}%` : `${name}(${value}): ${weight}%`) +
@@ -485,13 +549,18 @@ class Tests extends Component {
                   return <div>
                     {status}
                     <br />  
-                    {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
-                    {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
-                    {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
+                    <Button.Group>
+                      {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
+                      {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
+                      {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
+                      <Button type="primary" icon="exclamation-circle" onClick={e => {
+                        dispatch({ type: 'common/getTestRate', var_name: row.var_name, name: row.name })
+                      }}/>
+                    </Button.Group>
                   </div>
                 }
               },
-            ]} pagination={false} />;
+            ]} pagination={false} />
           </div>
         </Content>
         <Footer style={{ textAlign: 'center' }}>quzhaopinapp.com ©2019</Footer>
