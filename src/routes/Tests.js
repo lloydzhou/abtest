@@ -341,13 +341,21 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
   ]
   for (const target of rateTargets) {
     columns.push({
-      title: target,
+      title: (<Tooltip title={<div>转化率：转化人数／实验UV <br /> 转化人数：累计指标触发人数<br />总值：累计上报指标数<br />均值：指标总值／实验UV</div>}>
+        {target}<Icon type="exclamation-circle" />
+      </Tooltip>),
       dataIndex: target,
       key: target,
       render(value, row) {
         const { count, user } = value
         const { pv, uv } = row
-        return `count: ${count}, user: ${user}, pv: ${pv}, uv: ${uv}`
+        console.log(`count: ${count}, user: ${user}, pv: ${pv}, uv: ${uv}`)
+        return <div>
+          <div>转化率：{(user/(uv||1) * 100).toFixed(2)}%</div>
+          <div>转化人数：{user}</div>
+          <div>总值：{count}</div>
+          <div>均值：{count/(uv||1)}</div>
+        </div>
       }
     })
   }
