@@ -95,7 +95,7 @@ export default {
     *getVersions({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getVersions)
       if (!err && data.code === 0) {
-        const versions = data.versions.length ? data.versions.chunk(11).map(item => {
+        const versions = data.versions.length ? data.versions.chunk(9).map(item => {
           const [version, var_name, name, value, weight, pv, uv, created, modified] = item
           return {
             version, var_name, name, value, weight: parseFloat(weight), pv, uv, created, modified,
