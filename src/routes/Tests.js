@@ -324,6 +324,9 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       title: '版本',
       dataIndex: 'version',
       key: 'version',
+      render(version, row) {
+        return `${version}(${row.weight}%)`
+      }
     },
     {
       title: '实验PV',
@@ -351,10 +354,11 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
   const preIndex = 6
   const dataSource = rateVersions.chunk(rateTargets.length * 2 + preIndex).map(item => {
     // eslint-disable-next-line
-    const [value, weight, var_name, name, pv, uv] = item
+    const [value, var_name, weight, name, pv, uv] = item
     const res = {
-      value, weight, var_name,
+      value, var_name,
       version: name,
+      weight: parseFloat(weight),
       pv: parseFloat(pv) || 0,
       uv: parseFloat(uv) || 0,
     } 
