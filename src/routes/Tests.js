@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider, Form, Modal, Select, message, Icon, Dropdown } from 'antd';
+import {
+  Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider,
+  Form, Modal, Select, message, Icon, Dropdown, Tooltip,
+} from 'antd';
 import { editTestWeight } from '../services/common';
 
 const { Header, Content, Footer } = Layout;
@@ -336,7 +339,7 @@ class Tests extends Component {
   
   render() {
     const {
-      tests=[], layers=[], layerWeight={}, testWeight={},
+      tests=[], layers=[], versions=[], layerWeight={}, testWeight={},
       newTargetVarName, newVersion, env,
       showNewTestForm=false, editTest, targets=[], dispatch
     } = this.props
@@ -407,29 +410,16 @@ class Tests extends Component {
               //   key: 'default_value',
               // },
               {
-                title: '已分配流量',
+                title: '流量',
                 dataIndex: 'var_name',
                 key: 'weight',
-                render(var_name) {
-                  const percent = testWeight[var_name] ? testWeight[var_name].total : 0
-                  return <Progress percent={percent} />
-                }
-              },
-              {
-                title: '版本',
-                dataIndex: 'var_name',
-                key: 'version',
-                width: 180,
                 render(var_name, row) {
                   const weights = testWeight[var_name] ? testWeight[var_name].weight : []
+                  const percent = testWeight[var_name] ? testWeight[var_name].total : 0
                   return <div>
-                    {weights.map(({value, name, weight}) => {
-                      return <Progress key={value} style={{width: 100}} percent={weight} format={v => {
-                        return name === value ? `${value}: ${v}%` : `${name}(${value}): ${v}%`
-                      }}/>
-                    })}
-                    <br />
-                    <Button.Group>
+                    <div>
+                    共{weights.length}个版本已分配流量{percent}:
+                    <Button.Group style={{float: 'right'}}>
                       <Button type="primary" size="small" icon="edit" onClick={e => {
                         dispatch({ type: 'common/save', payload: { editTest: {_var_name: row.var_name} }})
                       }} title="编辑版本流量"/>
@@ -446,6 +436,19 @@ class Tests extends Component {
                         })
                       }}/>
                     </Button.Group>
+                    </div>
+                    <Progress percent={percent} />
+                    <div>各版本流量分配情况：</div>
+                    {weights.map(({value, name, weight}) => {
+                      console.log(versions)
+                      const current_version = versions.find(i => i.var_name === row.var_name && i.value === value)
+                      return <Tooltip title={
+                        (name === value ? `${value}: ${weight}%` : `${name}(${value}): ${weight}%`) +
+                        (current_version ? `, pv: ${current_version.pv || '-'}, uv: ${current_version.uv || '-'}` : '')
+                      } key={value}>
+                        <Progress percent={weight} />
+                      </Tooltip>
+                    })}
                   </div>
                 }
               },
@@ -456,13 +459,17 @@ class Tests extends Component {
                 render(var_name, row) {
                   const target = targets.filter(t => t.var_name === var_name)
                   return <div>
-                    {target.map(({target_name}) => {
-                      return <div key={target_name}>{target_name}</div>
+                    <div>共{target.length}个指标:
+                      <Button type="primary" size="small" icon="plus-circle" title="添加指标" style={{marginLeft: 30}} onClick={e => {
+                        dispatch({ type: 'common/save', payload: { newTargetVarName: row.var_name }})
+                      }}/>
+                    </div>
+                    {target.map(({target_name, count, rate}) => {
+                      return <div key={target_name}>
+                        {target_name}
+                        {count ? rate ? ` (${count}: ${rate}%)` : ` (${count})`: ' -'}
+                      </div>
                     })}
-                    <br />
-                    <Button type="primary" size="small" icon="plus-circle" title="添加指标" onClick={e => {
-                      dispatch({ type: 'common/save', payload: { newTargetVarName: row.var_name }})
-                    }}/>
                   </div>
                 }
               },
