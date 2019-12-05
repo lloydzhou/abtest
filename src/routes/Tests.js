@@ -347,23 +347,25 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       </Tooltip>),
       dataIndex: target,
       key: target,
-      render(value, row, i) {
-        const defaultValue = dataSource[0][target]
-        const { count: dcount, mean: dmean, std: dstd } = defaultValue
+      render(value, row) {
+        const defaultValue = dataSource.find(item => item.value === showTestRate.default_value)
+        console.log(showTestRate, defaultValue)
+        const { count: dcount, mean: dmean, std: dstd } = defaultValue || {}
         const { count, user, min:tmin, max:tmax, mean:tmean, std:tstd } = value
         const { pv, uv, min, max, mean, std } = row
         console.log(`count: ${count}, user: ${user}, pv: ${pv}, uv: ${uv}`)
         console.log(`user min: ${min}, max: ${max}, mean: ${mean}, std: ${std}`)
         console.log(`target min: ${tmin}, max: ${tmax}, mean: ${tmean}, std: ${tstd}`)
         const zscore = ZScore(tmean, tstd, count||0, dmean, dstd, dcount||1)
+        const pvalue = getZPercent(zscore)
         return <div>
           <div>转化率：{(user/(uv||1) * 100).toFixed(2)}%</div>
           <div>转化人数：{user}</div>
           <div>总值：{count}</div>
           <div>均值：{count/(uv||1)}</div>
           <div>标准差：{tstd}</div>
-          {i !== 0 ? <div>ZScore：{zscore}</div> : null}
-          {i !== 0 ? <div>p-value：{getZPercent(zscore)}</div> : null}
+          {row.value !== showTestRate.default_value ? <div>ZScore：{isNaN(zscore) ? '-' : zscore}</div> : null}
+          {row.value !== showTestRate.default_value ? <div>p-value：{isNaN(pvalue) ? '-' : pvalue}</div> : null}
         </div>
       }
     })
@@ -394,7 +396,7 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       }
     }
     return res
-  })
+  }).sort((a,b) => a.value === showTestRate.default_value ? -1 : 1)
   return (
     <Modal
       title={`${showTestRate ? showTestRate.name : '-'}转化率`}
@@ -585,7 +587,7 @@ class Tests extends Component {
                       {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
                       {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
                       <Button type="primary" icon="exclamation-circle" onClick={e => {
-                        dispatch({ type: 'common/getTestRate', var_name: row.var_name, name: row.name })
+                        dispatch({ type: 'common/getTestRate', var_name: row.var_name, name: row.name, default_value: row.default_value })
                       }}/>
                     </Button.Group>
                   </div>
