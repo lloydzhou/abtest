@@ -6,6 +6,7 @@ import {
   Form, Modal, Select, message, Icon, Dropdown, Tooltip,
 } from 'antd';
 import { editTestWeight } from '../services/common';
+import { getZPercent, ZScore } from '../utils/utils';
 
 const { Header, Content, Footer } = Layout;
 const FormItem = Form.Item;
@@ -346,34 +347,50 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       </Tooltip>),
       dataIndex: target,
       key: target,
-      render(value, row) {
-        const { count, user } = value
-        const { pv, uv } = row
+      render(value, row, i) {
+        const defaultValue = dataSource[0][target]
+        const { count: dcount, mean: dmean, std: dstd } = defaultValue
+        const { count, user, min:tmin, max:tmax, mean:tmean, std:tstd } = value
+        const { pv, uv, min, max, mean, std } = row
         console.log(`count: ${count}, user: ${user}, pv: ${pv}, uv: ${uv}`)
+        console.log(`user min: ${min}, max: ${max}, mean: ${mean}, std: ${std}`)
+        console.log(`target min: ${tmin}, max: ${tmax}, mean: ${tmean}, std: ${tstd}`)
+        const zscore = ZScore(tmean, tstd, count||0, dmean, dstd, dcount||1)
         return <div>
           <div>转化率：{(user/(uv||1) * 100).toFixed(2)}%</div>
           <div>转化人数：{user}</div>
           <div>总值：{count}</div>
           <div>均值：{count/(uv||1)}</div>
+          <div>标准差：{tstd}</div>
+          {i !== 0 ? <div>ZScore：{zscore}</div> : null}
+          {i !== 0 ? <div>p-value：{getZPercent(zscore)}</div> : null}
         </div>
       }
     })
   }
-  const preIndex = 6
-  const dataSource = rateVersions.chunk(rateTargets.length * 2 + preIndex).map(item => {
+  const preIndex = 10
+  const dataSource = rateVersions.chunk(rateTargets.length * 6 + preIndex).map(item => {
     // eslint-disable-next-line
-    const [value, var_name, weight, name, pv, uv] = item
+    const [value, var_name, weight, name, pv, uv, min, max, mean, std] = item
     const res = {
       value, var_name,
       version: name,
       weight: parseFloat(weight),
       pv: parseFloat(pv) || 0,
       uv: parseFloat(uv) || 0,
+      min: parseFloat(min) || 0,
+      max: parseFloat(max) || 0,
+      mean: parseFloat(mean) || 0,
+      std: parseFloat(std) || 0,
     } 
     for (let index = 0; index < rateTargets.length; index++) {
       res[rateTargets[index]] = {
-        count: parseFloat(item[preIndex + index * 2]) || 0,
-        user: parseFloat(item[1 + preIndex + index * 2]) || 0,
+        count: parseFloat(item[preIndex + index * 6]) || 0,
+        user:  parseFloat(item[1 + preIndex + index * 6]) || 0,
+        min:   parseFloat(item[2 + preIndex + index * 6]) || 0,
+        max:   parseFloat(item[3 + preIndex + index * 6]) || 0,
+        mean:  parseFloat(item[4 + preIndex + index * 6]) || 0,
+        std:   parseFloat(item[5 + preIndex + index * 6]) || 0,
       }
     }
     return res
