@@ -73,13 +73,13 @@ export default {
         yield put({ type: 'save', payload: {showNewTestForm: false}})
       }
     },
-    *getTestRate({ var_name, name }, { put, call }) {
+    *getTestRate({ var_name, name, default_value }, { put, call }) {
       const { err, data } = yield call(getTestRate, var_name)
       if (!err && data.code === 0) {
         yield put({
           type: 'save',
           payload: {
-            showTestRate: {var_name, name: name || var_name},
+            showTestRate: {var_name, name: name || var_name, default_value: default_value},
             rateTargets: data.targets,
             rateVersions: data.versions,
           }
