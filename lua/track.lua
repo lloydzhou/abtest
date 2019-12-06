@@ -24,7 +24,7 @@ for i, v in ipairs(ARGV) do
                         -- 1. 在实验级别增加当天的日期；
                         -- 2. 在实验的hashset上以指标为target自增pv和uv
                         redis.call("sadd", "days:" .. var_name, today)
-                        redis.call("hincrby", "var:" .. var_name, today .. ":" .. value .. ":" .. target .. ":pv", 1)
+                        redis.call("hincrby", "day:" .. today, var_name .. ":" .. value .. ":" .. target .. ":pv", 1)
                         redis.call("zincrby", key, inc, user_id)
                         success = success + 1
                     end

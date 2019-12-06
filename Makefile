@@ -11,5 +11,6 @@ init-redis:
 	docker-compose exec redis redis-cli script load "$$(cat lua/test-weight.lua)"
 	docker-compose exec redis redis-cli script load "$$(cat lua/get-var.lua)"
 	docker-compose exec redis redis-cli script load "$$(cat lua/track.lua)"
+	docker-compose exec redis redis-cli script load "$$(cat lua/traffic.lua)"
 
 
