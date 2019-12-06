@@ -455,7 +455,8 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
     const ts = item.shift()
     const res = {
       // day: new Date(item[0]),
-      day: `${new Date(ts * 1000)}`.split(' ').slice(0, 4).join(' ')
+      day: ts,
+      // day: `${new Date(ts * 1000)}`.split(' ').slice(0, 4).join(' ')
     } 
     item.chunk(1 + trafficTargets.length).map((data, index) => {
       res[`${trafficValues[index]}`] = parseFloat(data.shift()) || 0
