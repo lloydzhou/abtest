@@ -10,6 +10,7 @@ if var_exists == 0 then
     return {-1, "var_name not exists"}
 end
 
+local time = redis.call("TIME")
 local value = redis.call("hget", "user:value:" .. var_name, user_id)
 local res = redis.call("hmget", "var:" .. var_name, "type", "name", "layer", "status", "weight", "default")
 local typ, test, layer, status, layer_weight, default = unpack(res)
@@ -28,7 +29,6 @@ if not value then
         "get", "#", "get", "version:" .. var_name .. ":*->weight"
     )
     local i, v, val, weight
-    local time = redis.call("TIME")
     
     math.randomseed(tonumber(time[1]))
     local random, real_weight = math.random(), 0
@@ -53,7 +53,14 @@ if not value then
     value = default
 end
 
-redis.call("zincrby", "uv:" .. var_name .. ":" .. value, 1, user_id)
+local version = var_name .. ":" .. value
+local today = time[1] - (time[1] % 86400)
+-- 1. 在实验级别增加当天的日期；
+-- 2. 在实验的hashset上以版本为key自增pv和uv
+redis.call("sadd", "days:" .. var_name, today)
+redis.call("hincrby", "var:" .. var_name, today .. ":" .. version .. ":pv", 1)
+-- 3. 实验pv按用户自增
+redis.call("zincrby", "uv:" .. version, 1, user_id)
 
 return {1, {typ, test, layer, value}}
 
