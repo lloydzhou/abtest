@@ -4,6 +4,7 @@
 
 local var_name = ARGV[1]
 local user_id = ARGV[2]
+local today = ARGV[3]
 
 local var_exists = redis.call("sismember", "vars", var_name)
 if var_exists == 0 then
@@ -54,7 +55,6 @@ if not value then
 end
 
 local version = var_name .. ":" .. value
-local today = time[1] - (time[1] % 86400)
 -- 1. 在实验级别增加当天的日期；
 -- 2. 在实验的hashset上以版本为key自增pv和uv
 redis.call("sadd", "days:" .. var_name, today)
