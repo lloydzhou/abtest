@@ -58,7 +58,7 @@ local today = time[1] - (time[1] % 86400)
 -- 1. 在实验级别增加当天的日期；
 -- 2. 在实验的hashset上以版本为key自增pv和uv
 redis.call("sadd", "days:" .. var_name, today)
-redis.call("hincrby", "var:" .. var_name, today .. ":" .. version .. ":pv", 1)
+redis.call("hincrby", "var:" .. var_name, today .. ":" .. value .. ":pv", 1)
 -- 3. 实验pv按用户自增
 redis.call("zincrby", "uv:" .. version, 1, user_id)
 
