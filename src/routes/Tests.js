@@ -349,7 +349,7 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       key: target,
       render(value, row) {
         const defaultValue = dataSource.find(item => item.value === showTestRate.default_value)
-        console.log(showTestRate, defaultValue)
+        // console.log(showTestRate, defaultValue)
         const { count: dcount, mean: dmean, std: dstd } = defaultValue || {}
         const { count, user, min:tmin, max:tmax, mean:tmean, std:tstd } = value
         const { pv, uv, min, max, mean, std } = row
@@ -415,6 +415,67 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
   )
 }
 
+
+const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, trafficValues, trafficTraffic, dispatch }) => {
+  const columns = [
+    {
+      title: '日期',
+      dataIndex: 'day',
+      key: 'day',
+    },
+  ]
+  for (const value of trafficValues) {
+    const version = versions.find(i => i.var_name === showTestTraffic.var_name && i.value === value)
+    const name = version ? version.name : value
+    columns.push({
+      title: name,
+      dataIndex: value,
+      key: value,
+    })
+    for (const target of trafficTargets) {
+      const key = `${value}:${target}`
+      columns.push({
+        title: `${name}:${target}`,
+        dataIndex: key,
+        key: key,
+      })
+    }
+  }
+  const preIndex = 1
+  const length = trafficValues.length * (trafficTargets.length + 1)
+  const dataSource = trafficTraffic.chunk(length + preIndex).map(item => {
+    // eslint-disable-next-line
+    const res = {
+      // day: new Date(item[0]),
+      day: item.shift(),
+    } 
+    item.chunk(1 + trafficTargets.length).map((data, index) => {
+      res[`${trafficValues[index]}`] = parseFloat(data.shift()) || 0
+      return data.map((v, tindex) => {
+        return res[`${trafficValues[index]}:${trafficTargets[tindex]}`] = parseFloat(v) || 0
+      })
+    })
+    return res
+  })
+  const width = 300 + length * 100
+  return (
+    <Modal
+      title={`${showTestTraffic ? showTestTraffic.name : '-'}流量`}
+      visible={!!showTestTraffic}
+      key={showTestTraffic && showTestTraffic.name || 'TestTrafficInfo'}
+      width={width > 1000 ? 1000 : width}
+      onCancel={e => {
+        dispatch({ type: 'common/save', payload: {showTestTraffic: false } })
+      }}
+      footer={<Button onClick={e => {
+        dispatch({ type: 'common/save', payload: {showTestTraffic: false } })
+      }}>关闭</Button>}
+    >
+      <Table dataSource={dataSource} rowKey={row => row.day} columns={columns} pagination={false} />
+    </Modal>
+  )
+}
+
 class Tests extends Component {
   constructor(props) {
     super(props);
@@ -438,6 +499,7 @@ class Tests extends Component {
       tests=[], layers=[], versions=[], layerWeight={}, testWeight={},
       newTargetVarName, newVersion, env,
       showTestRate, rateTargets=[], rateVersions=[],
+      showTestTraffic, trafficValues=[], trafficTargets=[], trafficTraffic=[],
       showNewTestForm=false, editTest, targets=[], dispatch
     } = this.props
     const testAction = this.testAction.bind(this)
@@ -480,6 +542,14 @@ class Tests extends Component {
           <NewTargetFrom newTargetVarName={newTargetVarName} dispatch={dispatch} />
           <NewVersionFrom newVersion={newVersion} testWeight={testWeight} dispatch={dispatch} />
           <TestRateInfo showTestRate={showTestRate} rateTargets={rateTargets} rateVersions={rateVersions} dispatch={dispatch} />
+          <TestTrafficInfo
+            showTestTraffic={showTestTraffic}
+            trafficValues={trafficValues}
+            trafficTargets={trafficTargets}
+            trafficTraffic={trafficTraffic}
+            versions={versions}
+            dispatch={dispatch}
+          />
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
             <Table dataSource={tests} rowKey={row => row.var_name} columns={[
               {
@@ -586,7 +656,10 @@ class Tests extends Component {
                       {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
                       {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
                       {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
-                      <Button type="primary" icon="exclamation-circle" onClick={e => {
+                      <Button type="primary" icon="bar-chart" onClick={e => {
+                        dispatch({ type: 'common/getTestTraffic', var_name: row.var_name, name: row.name, default_value: row.default_value })
+                      }}/>
+                      <Button type="primary" icon="deployment-unit" onClick={e => {
                         dispatch({ type: 'common/getTestRate', var_name: row.var_name, name: row.name, default_value: row.default_value })
                       }}/>
                     </Button.Group>
