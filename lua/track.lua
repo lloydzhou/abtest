@@ -1,12 +1,12 @@
 -- 记录指标信息
 -- 参数不固定，但是最后一个参数是user_id
--- 格式是[target1] [inc1] [target2] [inc2] user_id
+-- 格式是key1: user_id, key2: date [target1] [inc1] [target2] [inc2]
 
-local user_id = ARGV[#ARGV]
+local user_id = KEYS[1]
+local today = KEYS[2]
+
 local target, inc, i, v
 local count, success = 0, 0
-local time = redis.call("TIME")
-local today = time[1] - (time[1] % 86400)
 for i, v in ipairs(ARGV) do
     if i % 2 == 1 then
         target = v
