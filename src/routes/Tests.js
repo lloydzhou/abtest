@@ -10,6 +10,7 @@ import { getZPercent, ZScore } from '../utils/utils';
 import {
    Chart,
    Geom,
+   Tooltip as BTooltip,
    Axis,
    Legend,
  } from "bizcharts";
@@ -482,10 +483,11 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
       }}>关闭</Button>}
     >
       <Chart height={300} data={dataSource.reverse()} forceFit={true}>
-        <Axis name="day" />
-        <Legend position="top" />
+        <Axis />
+        <Legend />
+        <BTooltip />
         {columns.slice(1).map(({dataIndex}) => {
-          return <Geom type="point" position={`day*${dataIndex}`} shape="spline" size={2} />
+          return <Geom type="line" position={`day*${dataIndex}`} shape="smooth" />
         })}
       </Chart>
       <Table dataSource={dataSource} rowKey={row => row.day} columns={columns} pagination={false} />
