@@ -7,6 +7,13 @@ import {
 } from 'antd';
 import { editTestWeight } from '../services/common';
 import { getZPercent, ZScore } from '../utils/utils';
+import {
+   Chart,
+   Geom,
+   Axis,
+   Legend,
+ } from "bizcharts";
+
 
 const { Header, Content, Footer } = Layout;
 const FormItem = Form.Item;
@@ -445,9 +452,10 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
   const length = trafficValues.length * (trafficTargets.length + 1)
   const dataSource = trafficTraffic.chunk(length + preIndex).map(item => {
     // eslint-disable-next-line
+    const ts = item.shift()
     const res = {
       // day: new Date(item[0]),
-      day: item.shift(),
+      day: `${new Date(ts * 1000)}`.split(' ').slice(0, 4).join(' ')
     } 
     item.chunk(1 + trafficTargets.length).map((data, index) => {
       res[`${trafficValues[index]}`] = parseFloat(data.shift()) || 0
@@ -457,7 +465,8 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
     })
     return res
   })
-  const width = 300 + length * 100
+  const width = 300 + length * 120
+  // console.log(dataSource)
   return (
     <Modal
       title={`${showTestTraffic ? showTestTraffic.name : '-'}流量`}
@@ -471,6 +480,13 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
         dispatch({ type: 'common/save', payload: {showTestTraffic: false } })
       }}>关闭</Button>}
     >
+      <Chart height={300} data={dataSource.reverse()} forceFit={true}>
+        <Axis name="day" />
+        <Legend position="top" />
+        {columns.slice(1).map(({dataIndex}) => {
+          return <Geom type="point" position={`day*${dataIndex}`} shape="spline" size={2} />
+        })}
+      </Chart>
       <Table dataSource={dataSource} rowKey={row => row.day} columns={columns} pagination={false} />
     </Modal>
   )
