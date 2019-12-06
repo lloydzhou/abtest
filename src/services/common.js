@@ -56,3 +56,7 @@ export function getTestRate(var_name) {
   return request(`/ab/test/rate?var=${var_name}`);
 }
 
+export function getTestTraffic(var_name) {
+  return request(`/ab/test/traffic?var=${var_name}`);
+}
+

@@ -6,6 +6,7 @@ import {
   addTest,
   editTestWeight,
   getTestRate,
+  getTestTraffic,
   getVersions,
   testAction,
   getTargets,
@@ -82,6 +83,20 @@ export default {
             showTestRate: {var_name, name: name || var_name, default_value: default_value},
             rateTargets: data.targets,
             rateVersions: data.versions,
+          }
+        })
+        yield put({ type: 'getTestTraffic', var_name })
+      }
+    },
+    *getTestTraffic({ var_name }, { put, call }) {
+      const { err, data } = yield call(getTestTraffic, var_name)
+      if (!err && data.code === 0) {
+        yield put({
+          type: 'save',
+          payload: {
+            trafficTargets: data.targets,
+            trafficValues: data.values,
+            trafficTraffic: data.traffic,
           }
         })
       }
