@@ -482,8 +482,11 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
         dispatch({ type: 'common/save', payload: {showTestTraffic: false } })
       }}>关闭</Button>}
     >
-      <Chart height={300} data={dataSource.reverse()} forceFit={true}>
-        <Axis />
+      <Chart height={300} data={dataSource.reverse()} forceFit={true} scale={{sales: {type:"linear", min: 0, max: 1000, tickCount: 10}}}>
+        <Axis name="day" />
+        {columns.slice(1).map(({dataIndex}, i) => {
+          return <Axis position="left" name={dataIndex} visible={false}/>
+        })}
         <Legend />
         <BTooltip />
         {columns.slice(1).map(({dataIndex}) => {
