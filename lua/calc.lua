@@ -48,7 +48,7 @@ end
 -- 记录日志
 local log = {}
 
-local job = function(env)
+local calc = function(env)
   local i, j, version, target
 
   local versions = redis.call("smembers", "versions")
@@ -94,7 +94,7 @@ local job = function(env)
   end
 end
 
-job(ARGV[1])
+calc(ARGV[1])
 
 return log
 
