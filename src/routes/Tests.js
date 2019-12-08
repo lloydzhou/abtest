@@ -10,6 +10,7 @@ import { getZPercent, ZScore } from '../utils/utils';
 import {
    Chart,
    Geom,
+   Tooltip as BTooltip,
    Axis,
    Legend,
  } from "bizcharts";
@@ -455,7 +456,8 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
     const ts = item.shift()
     const res = {
       // day: new Date(item[0]),
-      day: `${new Date(ts * 1000)}`.split(' ').slice(0, 4).join(' ')
+      day: ts,
+      // day: `${new Date(ts * 1000)}`.split(' ').slice(0, 4).join(' ')
     } 
     item.chunk(1 + trafficTargets.length).map((data, index) => {
       res[`${trafficValues[index]}`] = parseFloat(data.shift()) || 0
@@ -480,11 +482,15 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
         dispatch({ type: 'common/save', payload: {showTestTraffic: false } })
       }}>关闭</Button>}
     >
-      <Chart height={300} data={dataSource.reverse()} forceFit={true}>
+      <Chart height={300} data={dataSource.reverse()} forceFit={true} scale={{sales: {type:"linear", min: 0, max: 1000, tickCount: 10}}}>
         <Axis name="day" />
-        <Legend position="top" />
+        {columns.slice(1).map(({dataIndex}, i) => {
+          return <Axis position="left" name={dataIndex} visible={false}/>
+        })}
+        <Legend />
+        <BTooltip />
         {columns.slice(1).map(({dataIndex}) => {
-          return <Geom type="point" position={`day*${dataIndex}`} shape="spline" size={2} />
+          return <Geom type="line" position={`day*${dataIndex}`} shape="smooth" />
         })}
       </Chart>
       <Table dataSource={dataSource} rowKey={row => row.day} columns={columns} pagination={false} />
