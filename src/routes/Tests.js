@@ -369,10 +369,10 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
           <div>转化率：{(user/(uv||1) * 100).toFixed(2)}%</div>
           <div>转化人数：{user}</div>
           <div>总值：{count}</div>
-          <div>均值：{count/(uv||1)}</div>
-          <div>标准差：{tstd}</div>
-          {row.value !== showTestRate.default_value ? <div>ZScore：{isNaN(zscore) ? '-' : zscore}</div> : null}
-          {row.value !== showTestRate.default_value ? <div>p-value：{isNaN(pvalue) ? '-' : pvalue}</div> : null}
+          <div>均值：{(count/(uv||1)).toFixed(2)}</div>
+          <div>标准差：{(tstd).toFixed(2)}</div>
+          {row.value !== showTestRate.default_value ? <div>ZScore：{isNaN(zscore) ? '-' : zscore.toFixed(2)}</div> : null}
+          {row.value !== showTestRate.default_value ? <div>p-value：{isNaN(pvalue) ? '-' : pvalue.toFixed(2)}</div> : null}
         </div>
       }
     })
