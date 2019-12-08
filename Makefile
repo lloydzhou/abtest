@@ -1,6 +1,7 @@
 
 build:
 	docker build -t ab -f docker/Dockerfile docker
+	docker build -t ab-crontab -f docker/Dockerfile.crontab docker
 
 init-redis:
 	docker-compose exec redis redis-cli script load "$$(cat lua/redis-aggregate.lua)"
