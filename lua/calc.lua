@@ -51,6 +51,7 @@ local log = {}
 local calc = function(env)
   local i, j, version, target
 
+  redis.call("select", env == "production" and 1 or 0)
   local versions = redis.call("smembers", "versions")
   local targets = redis.call("smembers", "targets")
   table.insert(log, env .. ", versions: " .. cjson.encode(versions) .. ", targets: " .. cjson.encode(targets))
