@@ -1,4 +1,10 @@
-FROM ab
+FROM redis:alpine
+
+ARG RESTY_IMAGE_TAG="3.10"
+
+# 增加国内的源
+RUN echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v${RESTY_IMAGE_TAG}/community/"  > /etc/apk/repositories
+RUN echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v${RESTY_IMAGE_TAG}/main/"  >> /etc/apk/repositories
 
 RUN apk update && apk add dcron && rm -rf /var/cache/apk/*
 
