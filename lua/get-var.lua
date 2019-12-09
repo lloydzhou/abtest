@@ -5,13 +5,14 @@
 local var_name = ARGV[1]
 local user_id = ARGV[2]
 local today = ARGV[3]
+local hash = ARGV[4]
 
 local var_exists = redis.call("sismember", "vars", var_name)
 if var_exists == 0 then
     return {-1, "var_name not exists"}
 end
 
-local time = redis.call("TIME")
+-- local time = redis.call("TIME")
 local value = redis.call("hget", "user:value:" .. var_name, user_id)
 local res = redis.call("hmget", "var:" .. var_name, "type", "name", "layer", "status", "weight", "default")
 local typ, test, layer, status, layer_weight, default = unpack(res)
@@ -31,8 +32,9 @@ if not value then
     )
     local i, v, val, weight
     
-    math.randomseed(tonumber(time[1]))
-    local random, real_weight = math.random(), 0
+    -- math.randomseed(tonumber(time[1]))
+    -- local random, real_weight = math.random(), 0
+    local random, real_weight = (tonumber(hash) % 100) / 100, 0
     for i, v in ipairs(weights) do
         if i % 2 == 1 then
             val = v
