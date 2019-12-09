@@ -28,7 +28,7 @@ if layer_weight <= 0 then
 end
 
 if not value then
-    local hash_weight, start_weight = (tonumber(hash) % 100) / 100, 0
+    local hash_weight, start_weight = (tonumber(hash) % 10000), 0
     local layer_weights = redis.call(
         "sort", "layer:" .. layer,
         "by", "var:*->created",
@@ -42,11 +42,11 @@ if not value then
             if var == var_name then
                 break -- 找到对应的实验就退出
             else
-                start_weight = start_weight + tonumber(v)
+                start_weight = start_weight + tonumber(v) * 100
             end
         end
     end
-    if start_weight < hash_weight and hash_weight <= start_weight + layer_weight then
+    if start_weight < hash_weight and hash_weight <= start_weight + layer_weight * 100 then
         local weights = redis.call(
             "sort", "value:" .. var_name,
             "by", "version:" .. var_name .. ":*->created",
@@ -60,8 +60,8 @@ if not value then
             else
                 weight = tonumber(v)
                 if weight > 0 then
-                    real_weight = real_weight + weight * layer_weight / 100
-                    if random <= real_weight then
+                    real_weight = real_weight + weight * layer_weight
+                    if hash_weight <= real_weight then
                         value = val
                         redis.call("hset", "user:value:" .. var_name, user_id, value)
                         break
