@@ -17,38 +17,61 @@ local value = redis.call("hget", "user:value:" .. var_name, user_id)
 local res = redis.call("hmget", "var:" .. var_name, "type", "name", "layer", "status", "weight", "default")
 local typ, test, layer, status, layer_weight, default = unpack(res)
 
+layer_weight = tonumber(layer_weight)
+if not layer then
+    return {-1, "layer not exists"}
+end
+if layer_weight <= 0 then
+    -- return {-1, "test weight is zero"}
+    -- 流量层分配流量为0，返回默认值，不记录pv等信息
+    return {1, {typ, test, layer, default}}
+end
+
 if not value then
-    if not layer then
-        return {-1, "layer not exists"} 
-    end
-    layer_weight = tonumber(layer_weight)
-    if layer_weight <= 0 then
-        return {-1, "test weight is zero"} 
-    end
-    local weights = redis.call(
-        "sort", "value:" .. var_name,
-        "by", "version:" .. var_name .. ":*->created",
-        "get", "#", "get", "version:" .. var_name .. ":*->weight"
+    local hash_weight, start_weight = (tonumber(hash) % 100) / 100, 0
+    local layer_weights = redis.call(
+        "sort", "layer:" .. layer,
+        "by", "var:*->created",
+        "get", "#", "get", "var:*->weight"
     )
-    local i, v, val, weight
-    
-    -- math.randomseed(tonumber(time[1]))
-    -- local random, real_weight = math.random(), 0
-    local random, real_weight = (tonumber(hash) % 100) / 100, 0
-    for i, v in ipairs(weights) do
+    local i, v, var, val, weight
+    for i, v in ipairs(layer_weights) do
         if i % 2 == 1 then
-            val = v
+            var = v
         else
-            weight = tonumber(v)
-            if weight > 0 then
-                real_weight = real_weight + weight * layer_weight / 10000
-                if random <= real_weight then
-                    value = val
-                    redis.call("hset", "user:value:" .. var_name, user_id, value)
-                    break
+            if var == var_name then
+                break -- 找到对应的实验就退出
+            else
+                start_weight = start_weight + tonumber(v)
+            end
+        end
+    end
+    if start_weight < hash_weight and hash_weight <= start_weight + layer_weight then
+        local weights = redis.call(
+            "sort", "value:" .. var_name,
+            "by", "version:" .. var_name .. ":*->created",
+            "get", "#", "get", "version:" .. var_name .. ":*->weight"
+        )
+
+        local real_weight = start_weight
+        for i, v in ipairs(weights) do
+            if i % 2 == 1 then
+                val = v
+            else
+                weight = tonumber(v)
+                if weight > 0 then
+                    real_weight = real_weight + weight * layer_weight / 100
+                    if random <= real_weight then
+                        value = val
+                        redis.call("hset", "user:value:" .. var_name, user_id, value)
+                        break
+                    end
                 end
             end
         end
+    else
+        -- 流量层内不在实验对应的流量范围，使用默认值
+        return {1, {typ, test, layer, default}}
     end
 end
 
