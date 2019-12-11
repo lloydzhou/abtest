@@ -681,7 +681,7 @@ class Tests extends Component {
                     {status}
                     <br />  
                     <Button.Group>
-                      {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
+                      {status === 'init' || status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
                       {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
                       {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
                       <Button type="primary" icon="bar-chart" onClick={e => {

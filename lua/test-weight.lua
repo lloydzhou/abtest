@@ -29,6 +29,11 @@ if not res then
     return {-1, "save weight to version failed"}
 end
 
+local res = redis.call("del", "user:value:" .. var_name)
+if res ~= 0 then
+    return {-1, "remove user value failed"}
+end
+
 return {1, 'edit version success'}
 
 
