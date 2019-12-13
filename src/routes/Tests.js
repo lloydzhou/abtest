@@ -164,7 +164,7 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
         dispatch({ type: 'common/save', payload: {editTest: null } })
       }}
       onOk={e => {
-        const total = weights.map(({ value, weight}) => editTest[value] ? editTest[value] : weight).reduce((s, i) => s + i)
+        const total = weights.map(({ value, weight}) => editTest[value] !== undefined ? editTest[value] : weight).reduce((s, i) => s + i)
         if (total > 100) {
           message.error("总流量超出")
         } else {
