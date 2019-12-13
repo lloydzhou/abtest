@@ -168,7 +168,7 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
         if (total > 100) {
           message.error("总流量超出")
         } else {
-          const changes = weights.filter(({ value, weight}) => editTest[value] && weight !== editTest[value])
+          const changes = weights.filter(({ value, weight}) => editTest[value] !== undefined && weight !== editTest[value])
           if (changes.length) {
             Promise.all(changes.map(({ value, name }) => editTestWeight(
               editTest._var_name, value, editTest[value], name,
