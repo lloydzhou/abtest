@@ -530,7 +530,6 @@ class Tests extends Component {
       showTestTraffic, trafficValues=[], trafficTargets=[], trafficTraffic=[],
       showNewTestForm=false, editTest, targets=[], dispatch
     } = this.props
-    console.log('-------------tests', tests)
     const testAction = this.testAction.bind(this)
     return (
       <Layout className="layout">
