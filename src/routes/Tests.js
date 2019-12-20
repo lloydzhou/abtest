@@ -584,6 +584,9 @@ class Tests extends Component {
                 title: '流量层',
                 dataIndex: 'layer',
                 key: 'layer',
+                render(val, row) {
+                  return `${val}(${row.weight || 0}/100)`
+                }
               },
               {
                 title: '测试名称',
@@ -683,7 +686,7 @@ class Tests extends Component {
                     <Button.Group>
                       {status === 'init' || status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
                       {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
-                      {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
+                      {status === 'stoped' || status === 'init' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
                       <Button type="primary" icon="bar-chart" onClick={e => {
                         dispatch({ type: 'common/getTestTraffic', var_name: row.var_name, name: row.name, default_value: row.default_value })
                       }}/>
