@@ -6,7 +6,7 @@ import {
   Form, Modal, Select, message, Icon, Dropdown, Tooltip,
 } from 'antd';
 import { editTestWeight } from '../services/common';
-import { getZPercent, ZScore } from '../utils/utils';
+import { getZPercent, ZScore, realMeanStd } from '../utils/utils';
 import {
    Chart,
    Geom,
@@ -164,11 +164,11 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
         dispatch({ type: 'common/save', payload: {editTest: null } })
       }}
       onOk={e => {
-        const total = weights.map(({ value, weight}) => editTest[value] ? editTest[value] : weight).reduce((s, i) => s + i)
+        const total = weights.map(({ value, weight}) => editTest[value] !== undefined ? editTest[value] : weight).reduce((s, i) => s + i)
         if (total > 100) {
           message.error("总流量超出")
         } else {
-          const changes = weights.filter(({ value, weight}) => editTest[value] && weight !== editTest[value])
+          const changes = weights.filter(({ value, weight}) => editTest[value] !== undefined && weight !== editTest[value])
           if (changes.length) {
             Promise.all(changes.map(({ value, name }) => editTestWeight(
               editTest._var_name, value, editTest[value], name,
@@ -357,23 +357,29 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       key: target,
       render(value, row) {
         const defaultValue = dataSource.find(item => item.value === showTestRate.default_value)
-        // console.log(showTestRate, defaultValue)
-        const { count: dcount, mean: dmean, std: dstd } = defaultValue || {}
+        console.log(showTestRate, defaultValue)
+        const { user: duser, mean: dmean, std: dstd } = (defaultValue || {})[target] || {}
         const { count, user, min:tmin, max:tmax, mean:tmean, std:tstd } = value
         const { pv, uv, min, max, mean, std } = row
         console.log(`count: ${count}, user: ${user}, pv: ${pv}, uv: ${uv}`)
         console.log(`user min: ${min}, max: ${max}, mean: ${mean}, std: ${std}`)
         console.log(`target min: ${tmin}, max: ${tmax}, mean: ${tmean}, std: ${tstd}`)
-        const zscore = ZScore(tmean, tstd, count||0, dmean, dstd, dcount||1)
-        const pvalue = getZPercent(zscore)
+        const [drealmean, drealstd, drealcount] = realMeanStd(dmean, dstd, duser, defaultValue.uv)
+        const [trealmean, trealstd, trealcount] = realMeanStd(tmean, tstd, user, uv)
+        console.log(target, trealmean, trealstd, trealcount, drealmean, drealstd, drealcount)
+        // const zscore = ZScore(tmean, tstd, user||0, dmean, dstd, duser||1)
+        const zscore = ZScore(trealmean, trealstd, trealcount, drealmean, drealstd, drealcount)
+        // http://www.statskingdom.com/120MeanNormal2.html
+        const pvalue = 2 * getZPercent(-Math.abs(zscore))
+        console.log(`pvalue: ${pvalue}, zscore: ${zscore}, tmean: ${tmean}, tstd: ${tstd}, tuser: ${user}, dmean: ${dmean}, dstd: ${dstd}, duser: ${duser}`)
         return <div>
           <div>转化率：{(user/(uv||1) * 100).toFixed(2)}%</div>
           <div>转化人数：{user}</div>
           <div>总值：{count}</div>
-          <div>均值：{(count/(uv||1)).toFixed(2)}</div>
-          <div>标准差：{(tstd).toFixed(2)}</div>
-          {row.value !== showTestRate.default_value ? <div>ZScore：{isNaN(zscore) ? '-' : zscore.toFixed(2)}</div> : null}
-          {row.value !== showTestRate.default_value ? <div>p-value：{isNaN(pvalue) ? '-' : pvalue.toFixed(2)}</div> : null}
+          <div>均值：{trealmean.toFixed(2)}</div>
+          <div>标准差：{(trealstd).toFixed(3)}</div>
+          {row.value !== showTestRate.default_value ? <div>ZScore：{isNaN(zscore) ? '-' : zscore.toFixed(3)}</div> : null}
+          {row.value !== showTestRate.default_value ? <div>p-value：{isNaN(pvalue) ? '-' : pvalue.toFixed(3)}</div> : null}
         </div>
       }
     })
@@ -578,6 +584,9 @@ class Tests extends Component {
                 title: '流量层',
                 dataIndex: 'layer',
                 key: 'layer',
+                render(val, row) {
+                  return `${val}(${row.weight || 0}/100)`
+                }
               },
               {
                 title: '测试名称',
@@ -675,9 +684,9 @@ class Tests extends Component {
                     {status}
                     <br />  
                     <Button.Group>
-                      {status === 'init' || status === 'deleted' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
+                      {status === 'init' || status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'running', '启动实验')} type="primary">启动</Button> : null}
                       {status === 'running' ? <Button onClick={e => testAction(row.var_name, 'stoped', '停止实验')} type="danger">停止</Button> : null}
-                      {status === 'stoped' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
+                      {status === 'stoped' || status === 'init' ? <Button onClick={e => testAction(row.var_name, 'deleted', '删除实验')} type="danger">删除</Button> : null}
                       <Button type="primary" icon="bar-chart" onClick={e => {
                         dispatch({ type: 'common/getTestTraffic', var_name: row.var_name, name: row.name, default_value: row.default_value })
                       }}/>
