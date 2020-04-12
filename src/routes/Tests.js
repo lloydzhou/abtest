@@ -355,6 +355,7 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       </Tooltip>),
       dataIndex: target,
       key: target,
+      width: 200,
       render(value, row) {
         const defaultValue = dataSource.find(item => item.value === showTestRate.default_value)
         console.log(showTestRate, defaultValue)
@@ -411,12 +412,13 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
     }
     return res
   }).sort((a,b) => a.value === showTestRate.default_value ? -1 : 1)
+  const width = 300 + rateTargets.length * 200
   return (
     <Modal
       title={`${showTestRate ? showTestRate.name : '-'}转化率`}
       visible={!!showTestRate}
       key={showTestRate && showTestRate.name || 'TestRateInfo'}
-      width={600}
+      width={width}
       onCancel={e => {
         dispatch({ type: 'common/save', payload: {showTestRate: false } })
       }}
@@ -445,6 +447,7 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
       title: name,
       dataIndex: value,
       key: value,
+      width: 120,
     })
     for (const target of trafficTargets) {
       const key = `${value}:${target}`
@@ -452,6 +455,7 @@ const TestTrafficInfo = ({ versions=[], showTestTraffic, trafficTargets, traffic
         title: `${name}:${target}`,
         dataIndex: key,
         key: key,
+        width: 120,
       })
     }
   }
