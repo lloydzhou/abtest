@@ -52,6 +52,62 @@ local calc = function(env)
   local i, j, version, target
 
   redis.call("select", env == "production" and 1 or 0)
+  -- local versions = redis.call("smembers", "versions")
+  -- local targets = redis.call("smembers", "targets")
+  local versions = redis.call("sort", "versions", "by", "*", "get", "#", "get", "version:*->var_name")
+  local targets = redis.call("sort", "targets", "by", "*", "get", "#", "get", "target:*->var_name")
+  table.insert(log, env .. ", versions: " .. cjson.encode(versions) .. ", targets: " .. cjson.encode(targets))
+  for i, version in ipairs(versions) do
+    if i % 2 == 1 then
+      local version_var_name = versions[i + 1]
+      if version_var_name then -- 少数数据有问题，拿不到var_name
+        table.insert(log, env .. ", version_var_name: " .. version_var_name)
+        local status = redis.call("hget", "var:" .. version_var_name, "status")
+        if status == "running" then -- 只有运行中的实验才计算
+          local target_count = 0
+          for j, target in ipairs(targets) do
+            if j % 2 == 1 then
+              local target_var_name = targets[j + 1]
+              if target_var_name == version_var_name then -- 只有版本和指标属于同一个实验才计算转化率
+                local taggr = aggregate("track:" .. version .. ":" .. target)
+                if taggr then
+                  local tuv, tpv, tmin, tmax, tmean, tstd = unpack(taggr)
+                  redis.call("hmset",
+                    "version:" .. version,
+                    target .. ":count", tpv,
+                    target .. ":user", tuv,
+                    target .. ":min", tmin,
+                    target .. ":max", tmax,
+                    target .. ":mean", tmean,
+                    target .. ":std", tstd
+                  )
+                  target_count = target_count + 1
+                  table.insert(log, env .. ", set target to version: " .. "version:" .. version .. " : " .. cjson.encode({taggr}))
+                end
+              end
+            end
+          end
+          if target_count > 0 then -- 指标数量大于0的时候再处理PV和UV
+            local aggr = aggregate("uv:" .. version)
+            if aggr then
+              local uv, pv, min, max, mean, std = unpack(aggr)
+              redis.call("hmset",
+                "version:" .. version, "pv", pv, "uv", uv,
+                "uv:min", min, "uv:max", max, "uv:mean", mean, "uv:std", std
+              )
+              table.insert(log, env .. ", set pv to version: " .. "version:" .. version .. " : " .. cjson.encode({aggr}))
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+local calc1 = function(env)
+  local i, j, version, target
+
+  redis.call("select", env == "production" and 1 or 0)
   local versions = redis.call("smembers", "versions")
   local targets = redis.call("smembers", "targets")
   table.insert(log, env .. ", versions: " .. cjson.encode(versions) .. ", targets: " .. cjson.encode(targets))
@@ -61,6 +117,7 @@ local calc = function(env)
       local status = redis.call("hget", "var:" .. version_var_name, "status")
       if status == "running" then -- 只有运行中的实验才计算
         -- local aggr, aerr = redis.call("evalsha", sha, 1, "uv:" .. version)
+        --
         local aggr = aggregate("uv:" .. version)
         if aggr then
           local uv, pv, min, max, mean, std = unpack(aggr)
@@ -95,7 +152,8 @@ local calc = function(env)
   end
 end
 
-calc(ARGV[1])
+-- calc(ARGV[1])
+calc1(ARGV[1])
 
 return log
 

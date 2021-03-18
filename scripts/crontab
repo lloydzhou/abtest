@@ -1,2 +1,4 @@
-*/1 * * * * redis-cli -h redis eval "$(cat /lua/calc.lua)" 0 dev >> /tmp/dev.log 2>&1
-*/2 * * * * redis-cli -h redis eval "$(cat /lua/calc.lua)" 0 production >> /tmp/production.log 2>&1
+# */1 * * * * redis-cli -h redis eval "$(cat /lua/calc.lua)" 0 dev >> /tmp/dev.log 2>&1
+# */2 * * * * redis-cli -h redis eval "$(cat /lua/calc.lua)" 0 production >> /tmp/production.log 2>&1
+*/1 * * * * curl http://15926399336:w123456@ab/ab/calc -H 'X-Env: dev' >> /tmp/dev.log 2>&1
+*/2 * * * * curl http://15926399336:w123456@ab/ab/calc -H 'X-Env: production' >> /tmp/production.log 2>&1
