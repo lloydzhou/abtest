@@ -1,5 +1,9 @@
 
 build:
+	docker build -t hawkeye:base -f docker/Dockerfile.base docker
+	docker build -t hawkeye:ab -f docker/Dockerfile.ab .
+
+build-old:
 	docker build -t ab -f docker/Dockerfile docker
 	docker build -t ab-crontab -f docker/Dockerfile.crontab docker
 
