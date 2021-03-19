@@ -1,0 +1,16 @@
+FROM redis:alpine3.12
+
+COPY --from=openresty/openresty:alpine-apk /usr/local/openresty /usr/local/openresty
+COPY --from=openresty/openresty:alpine-apk /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=openresty/openresty:alpine-apk /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1
+
+# https://github.com/openresty/docker-openresty/blob/master/alpine-apk/Dockerfile
+RUN mkdir -p /var/run/openresty \
+    && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
+    && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
+
+COPY docker-entrypoint.sh /usr/local/bin/
+
+ENV PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin
+
+
