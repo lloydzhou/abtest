@@ -1,7 +1,7 @@
 ABADMIN?=abadmin
 ABPASSWD?=abpasswd
 
-HTPASSWD?=
+INTERVAL?=60
 
 build:
 	docker build -t hawkeye:ab -f docker/Dockerfile .
@@ -11,5 +11,5 @@ passwd:
 
 run:
 	# echo "$$(docker run --rm -it xmartlabs/htpasswd $(ABADMIN) $(ABPASSWD) )"
-	docker run -it -e HTPASSWD="$$(docker run --rm -it xmartlabs/htpasswd $(ABADMIN) $(ABPASSWD) )" -v `pwd`/data:/data/:rw -p 80:80 -p 63791:6379 hawkeye:ab
+	docker run -it -e INTERVAL=$(INTERVAL) -e HTPASSWD="$$(docker run --rm -it xmartlabs/htpasswd $(ABADMIN) $(ABPASSWD) )" -v `pwd`/data:/data/:rw -p 80:80 -p 63791:6379 hawkeye:ab
 

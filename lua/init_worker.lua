@@ -100,7 +100,8 @@ function calc(penv)
     end
   end
 end
-local delay = 10
+local env_interval = os.getenv("INTERVAL")
+local interval = tonumber(env_interval) or 60
 local calc_timer_callback = function(premature)
   if not premature then
     ngx.log(ngx.ERR, 'run calc_timer_callback')
@@ -110,7 +111,7 @@ local calc_timer_callback = function(premature)
   end
 end
 if 0 == ngx.worker.id() then
-  local ok, err = ngx.timer.every(delay, calc_timer_callback)
+  local ok, err = ngx.timer.every(interval, calc_timer_callback)
   if not ok then
     ngx.log(ngx.ERR, 'failed to create timer: ', err)
   end
