@@ -1,9 +1,0 @@
-FROM hawkeye:base
-
-COPY ab.conf /etc/nginx/conf.d/default.conf
-COPY dist /var/www/html
-COPY htpasswd /etc/nginx/htpasswd
-COPY lua /lua
-RUN /usr/local/openresty/luajit/bin/luajit -bg /lua/init.lua /usr/local/openresty/nginx/init.ljbc \
-  && /usr/local/openresty/luajit/bin/luajit -bg /lua/init_worker.lua /usr/local/openresty/nginx/init_worker.ljbc
-
