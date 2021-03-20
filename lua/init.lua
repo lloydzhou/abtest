@@ -259,7 +259,8 @@ local scripts = {
                 end
             end
         end
-        if start_weight < hash_weight and hash_weight <= start_weight + layer_weight * 100 then
+        -- 之前只考虑了半开半闭的区间，但是忽略了为0这个点
+        if (start_weight < hash_weight and hash_weight <= start_weight + layer_weight * 100) or (0 == start_weight and 0 == hash_weight) then
             local weights = redis.call(
                 "sort", "value:" .. var_name,
                 "by", "version:" .. var_name .. ":*->created",
