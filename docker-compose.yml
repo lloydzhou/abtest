@@ -1,24 +1,13 @@
 version: '2'
 services:
-  redis:
-    image: redis:alpine
   ab:
-    image: ab
+    image: hawkeye:ab
     volumes:
-      - ./ab.conf:/etc/nginx/conf.d/default.conf
+      - ./data:/data
       - ./dist:/var/www/html
       - ./htpasswd:/etc/nginx/htpasswd
-    links:
-      - redis
+    environment:
+      - INTERVAL=60
     ports:
-      - "0.0.0.0:8011:80"
-
-  crontab:
-    image: ab-crontab
-    volumes:
-      - ./scripts/crontab:/etc/cron.d/root
-      - ./scripts:/scripts
-      - ./lua:/lua
-    links:
-      - redis
+      - "0.0.0.0:8032:80"
 

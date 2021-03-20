@@ -3,8 +3,11 @@ ABPASSWD?=abpasswd
 
 INTERVAL?=60
 
-build:
+build: dist/index.js
 	docker build -t hawkeye:ab -f docker/Dockerfile .
+
+dist/index.js:
+	yarn run build
 
 passwd:
 	docker run --rm -it xmartlabs/htpasswd $(ABADMIN) $(ABPASSWD)
