@@ -58,7 +58,7 @@ function calc(penv)
     if i % 2 == 1 then
       local version_var_name = versions[i + 1]
       if version_var_name then -- 少数数据有问题，拿不到var_name
-        ngx.log(ngx.ERR, penv .. ", version_var_name: " .. version_var_name)
+        -- ngx.log(ngx.ERR, penv .. ", version_var_name: " .. version_var_name)
         local status = red:hget("var:" .. version_var_name, "status")
         if status == "running" then -- 只有运行中的实验才计算
           local target_count = 0
@@ -79,7 +79,7 @@ function calc(penv)
                     target .. ":std", tstd
                   )
                   target_count = target_count + 1
-                  ngx.log(ngx.ERR, penv .. ", set target to version: " .. "version:" .. version .. " : " .. cjson.encode({taggr}))
+                  -- ngx.log(ngx.ERR, penv .. ", set target to version: " .. "version:" .. version .. " : " .. cjson.encode({taggr}))
                 end
               end
             end
@@ -104,10 +104,10 @@ local env_interval = os.getenv("INTERVAL")
 local interval = tonumber(env_interval) or 60
 local calc_timer_callback = function(premature)
   if not premature then
-    ngx.log(ngx.ERR, 'run calc_timer_callback')
+    ngx.log(ngx.ERR, 'run calc for dev')
     calc('dev')
+    ngx.log(ngx.ERR, 'run calc for production')
     calc('production')
-    ngx.log(ngx.ERR, 'run calc end')
   end
 end
 if 0 == ngx.worker.id() then
