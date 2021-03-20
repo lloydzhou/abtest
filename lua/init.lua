@@ -185,12 +185,12 @@ local scripts = {
     end
     
     local res = redis.call("zadd", "value:" .. var_name, weight, value)
-    if res ~= 0 then
+    if not res then
         return {-1, "add version to test failed"}
     end
     
     local res = redis.call("sadd", "versions", var_name .. ":" .. value)
-    if res ~= 0 then
+    if not res then
         return {-1, "add version to versions failed"}
     end
     
