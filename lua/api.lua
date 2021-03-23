@@ -300,19 +300,35 @@ end)
 r:post('/ab/track', function(params)
   ngx.req.read_body()
   local user_id = get_user_id()
+  local today = ngx.today()
   local data = ngx.req.get_body_data()
   if data then
     local params = cjson.decode(data)
-    local sha = get_sha_by_script_name('track')
-    local args = {user_id, ngx.today()}
-    for target, inc in pairs(params) do
-      table.insert(args, target)
-      table.insert(args, inc)
-    end
+    local count, success = 0, 0
     local red = connect_redis()
-    local res, err = red:evalsha(sha, 2, unpack(args))
+    for target, inc in pairs(params) do
+        if inc > 0 then
+            count = count + 1
+            local target_exists, err = red:sismember("targets", target)
+            if not err and target_exists == 1 then
+                local var_name, err = red:hget("target:" .. target, "var_name")
+                if not err and var_name then
+                    local value, err = red:hget("user:value:" .. var_name, user_id)
+                    if value then
+                        local key = "track:" .. var_name .. ":" .. value .. ":" .. target
+                        -- 1. 在实验级别增加当天的日期；
+                        -- 2. 在实验的hashset上以指标为target自增pv和uv
+                        red:sadd("days:" .. var_name, today)
+                        red:hincrby("day:" .. today, var_name .. ":" .. value .. ":" .. target .. ":pv", 1)
+                        red:zincrby(key, inc, user_id)
+                        success = success + 1
+                    end
+                end
+            end
+        end
+    end
     close_redis(red)
-    response(200, 0, "success")
+    response(200, 0, "success", {count=count, success=success})
   end
 end)
 
