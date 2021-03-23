@@ -179,25 +179,122 @@ end)
 r:get('/ab/var', function(params)
   local user_id = get_user_id()
   local var_name = arg('name')
-  local red = connect_redis()
-  local sha = get_sha_by_script_name('get-var')
   local hash = murmurhash2(var_name .. ":" .. user_id)
-  local res, err = red:evalsha(sha, 0, var_name, user_id, ngx.today(), hash)
+  local red = connect_redis()
+
+  local var_exists, err = red:sismember("vars", var_name)
   if err then
-    response(200, -1, err)
-  else
-    local code, data = unpack(res)
-    if code == 1 then
-      local type, test, layer, value = unpack(data)
-      response(200, 0, "success", {
-        type=type, test=test, layer=layer, value=value,
-        hash=hash,
-      })
-    else
-      response(200, code, data)
-    end
+    close_redis(red)
+    return response(500, -1, 'get var_name failed', var_name)
   end
+  if var_exists == 0 then
+      close_redis(red)
+      return response(500, -1, "var_name not exists", var_name)
+  end
+
+  local value, err = red:hget("user:value:" .. var_name, user_id)
+  if err then
+    close_redis(red)
+    return response(500, -1, 'get user value failed', var_name)
+  end
+  local res, err = red:hmget("var:" .. var_name, "type", "name", "layer", "status", "weight", "default")
+  if err then
+    close_redis(red)
+    return response(500, -1, 'get var attribute failed', var_name)
+  end
+  local typ, test, layer, status, layer_weight, default = unpack(res)
+
+  layer_weight = tonumber(layer_weight)
+  if not layer then
+      close_redis(red)
+      return response(500, -1, "layer not exists")
+  end
+  if layer_weight <= 0 then
+      -- return {-1, "test weight is zero"}
+      -- 流量层分配流量为0，返回默认值，不记录pv等信息
+      close_redis(red)
+      return response(200, 1, "success", {
+          type=typ, test=test, layer=layer, value=default, hash=hash,
+      })
+  end
+
+  if value == ngx.null then
+      local hash_weight, start_weight = (tonumber(hash) % 10000), 0
+      local layer_weights, err = red:sort(
+          "layer:" .. layer,
+          "by", "var:*->created",
+          "get", "#", "get", "var:*->weight"
+      )
+      if err then
+        close_redis(red)
+        return response(500, -1, "get layer weights failed", layer)
+      end
+      local i, v, var, val, weight
+      for i, v in ipairs(layer_weights) do
+          if i % 2 == 1 then
+              var = v
+          else
+              if var == var_name then
+                  break -- 找到对应的实验就退出
+              else
+                  start_weight = start_weight + tonumber(v) * 100
+              end
+          end
+      end
+      -- 之前只考虑了半开半闭的区间，但是忽略了为0这个点
+      if (start_weight < hash_weight and hash_weight <= start_weight + layer_weight * 100) or (0 == start_weight and 0 == hash_weight) then
+          local weights, err = red:sort(
+              "value:" .. var_name,
+              "by", "version:" .. var_name .. ":*->created",
+              "get", "#", "get", "version:" .. var_name .. ":*->weight"
+          )
+
+          if err then
+            close_redis(red)
+            return response(500, -1, "get weights failed", var_name)
+          end
+          local real_weight = start_weight
+          for i, v in ipairs(weights) do
+              if i % 2 == 1 then
+                  val = v
+              else
+                  weight = tonumber(v)
+                  if weight > 0 then
+                      real_weight = real_weight + weight * layer_weight
+                      if hash_weight <= real_weight then
+                          value = val
+                          red:hset("user:value:" .. var_name, user_id, value)
+                          break
+                      end
+                  end
+              end
+          end
+      else
+          -- 流量层内不在实验对应的流量范围，使用默认值
+          close_redis(red)
+          return response(200, 1, "success", {
+              type=typ, test=test, layer=layer, value=default, hash=hash,
+          })
+      end
+  end
+
+  if value == ngx.null then
+      value = default
+  end
+
+  local version = var_name .. ":" .. value
+  -- 1. 在实验级别增加当天的日期；
+  -- 2. 在实验的hashset上以版本为key自增pv和uv
+  local today = ngx.today()
+  red:sadd("days:" .. var_name, today)
+  red:hincrby("day:" .. today, var_name .. ":" .. value .. ":pv", 1)
+  -- 3. 实验pv按用户自增
+  red:zincrby("uv:" .. version, 1, user_id)
+
   close_redis(red)
+  return response(200, 1, "success", {
+      type=typ, test=test, layer=layer, value=value, hash=hash,
+  })
 end)
 
 r:post('/ab/track', function(params)
