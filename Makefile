@@ -1,19 +1,18 @@
+ABADMIN?=abadmin
+ABPASSWD?=abpasswd
 
-build:
-	docker build -t ab -f docker/Dockerfile docker
-	docker build -t ab-crontab -f docker/Dockerfile.crontab docker
+INTERVAL?=60
 
-init-redis:
-	docker-compose exec redis redis-cli script load "$$(cat lua/redis-aggregate.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/add-layer.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/add-test.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/add-target.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/layer-weight.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/test-weight.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/get-var.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/track.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/traffic.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/rate.lua)"
-	docker-compose exec redis redis-cli script load "$$(cat lua/remove-test.lua)"
+build: dist/index.js
+	docker build -t hawkeye:ab -f docker/Dockerfile .
 
+dist/index.js:
+	yarn run build
+
+passwd:
+	docker run --rm -it xmartlabs/htpasswd $(ABADMIN) $(ABPASSWD)
+
+run:
+	# echo "$$(docker run --rm -it xmartlabs/htpasswd $(ABADMIN) $(ABPASSWD) )"
+	docker run -it -e INTERVAL=$(INTERVAL) -e HTPASSWD="$$(docker run --rm -it xmartlabs/htpasswd $(ABADMIN) $(ABPASSWD) )" -v `pwd`/data:/data/:rw -p 80:80 -p 63791:6379 hawkeye:ab
 

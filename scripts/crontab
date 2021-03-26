@@ -1,2 +1,0 @@
-*/1 * * * * redis-cli -h redis eval "$(cat /lua/calc.lua)" 0 dev >> /tmp/dev.log 2>&1
-*/2 * * * * redis-cli -h redis eval "$(cat /lua/calc.lua)" 0 production >> /tmp/production.log 2>&1
