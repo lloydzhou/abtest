@@ -92,7 +92,7 @@ function calc(penv)
                 "version:" .. version, "pv", pv, "uv", uv,
                 "uv:min", min, "uv:max", max, "uv:mean", mean, "uv:std", std
               )
-              ngx.log(ngx.ERR, penv .. ", set pv to version: " .. "version:" .. version .. " : " .. cjson.encode({aggr}))
+              ngx.log(ngx.DEBUG, penv .. ", set pv to version: " .. "version:" .. version .. " : " .. cjson.encode({aggr}))
             end
           end
         end
@@ -104,9 +104,9 @@ local env_interval = os.getenv("INTERVAL")
 local interval = tonumber(env_interval) or 60
 local calc_timer_callback = function(premature)
   if not premature then
-    ngx.log(ngx.ERR, 'run calc for dev')
+    ngx.log(ngx.DEBUG, 'run calc for dev')
     calc('dev')
-    ngx.log(ngx.ERR, 'run calc for production')
+    ngx.log(ngx.DEBUG, 'run calc for production')
     calc('production')
   end
 end
