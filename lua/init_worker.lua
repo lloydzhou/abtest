@@ -104,9 +104,9 @@ local env_interval = os.getenv("INTERVAL")
 local interval = tonumber(env_interval) or 60
 local calc_timer_callback = function(premature)
   if not premature then
-    ngx.log(ngx.DEBUG, 'run calc for dev')
+    ngx.log(ngx.DEBUG, 'run calc for dev.')
     calc('dev')
-    ngx.log(ngx.DEBUG, 'run calc for production')
+    ngx.log(ngx.DEBUG, 'run calc for production.')
     calc('production')
   end
 end

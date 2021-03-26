@@ -349,7 +349,7 @@ get_sha_by_script_name = function(script_name)
       response(500, -1, 'err to load script' .. err)
     end
     script_sha[script_name] = res
-    ngx.log(ngx.ERR, "load script", script_name, res)
+    ngx.log(ngx.INFO, "load script", script_name, res)
   end
   local sha = script_sha[script_name]
   return sha
