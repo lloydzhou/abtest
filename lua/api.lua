@@ -147,6 +147,39 @@ r:get('/ab/versions', function(params)
   })
 end)
 
+r:get('/ab/users', function(params)
+  local attr_name = arg('attr_name')
+  local page = tonumber(arg('page'))
+  local red = connect_redis()
+  local res, err = red:sort(
+    'user_attr:' .. attr_name, 'by', 'user_attr:*->created',
+    'get', '#', 'get', 'user_attr:*->name',
+    'get', 'user_attr:*->modified'
+  )
+  if err then
+    close_redis(red)
+    return response(500, 1, 'get users failed')
+  end
+  close_redis(red)
+  response(200, 0, "success", {
+    users=res,
+  })
+end)
+
+r:get('/ab/user/:user_id', function(params)
+  local user_id = params.user_id
+  local red = connect_redis()
+  local res, err = red:hgetall('user_attr:' .. user_id)
+  if err then
+    close_redis(red)
+    return response(500, 1, 'get user info failed')
+  end
+  close_redis(red)
+  response(200, 0, "success", {
+    user=res,
+  })
+end)
+
 r:get('/ab/attrs', function(params)
   local red = connect_redis()
   local res, err = red:sort(

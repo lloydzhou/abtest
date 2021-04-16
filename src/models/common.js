@@ -14,6 +14,8 @@ import {
   getUserAttributes,
   saveUserAttribute,
   removeUserAttribute,
+  getUserList,
+  getUserInfo,
 } from '../services/common'
 import { getEnv, setEnv } from '../utils/request'
 
@@ -194,6 +196,24 @@ export default {
       const { err, data } = yield call(removeUserAttribute, attribute)
       if (!err && data.code === 0) {
         yield put({ type: 'getUserAttributes' })
+      }
+    },
+    *getUserList({ attr_name, page }, { put, call }) { // eslint-disable-line
+      const { err, data } = yield call(getUserList, attr_name, page)
+      if (!err && data.code === 0) {
+        const users = data.attributes.length ? data.users.chunk(3).map(item => {
+          const [user_id, name, modified] = item
+          return {
+            user_id, name, modified,
+          }
+        }) : []
+        yield put({ type: 'save', payload: { users, userPage: page, user: false }})
+      }
+    },
+    *getUserInfo({ user_id }, { put, call }) { // eslint-disable-line
+      const { err, data } = yield call(getUserInfo, user_id)
+      if (!err && data.code === 0) {
+        yield put({ type: 'save', payload: { user: data.user }})
       }
     },
     *changeEnv({ env }, { put, select }) {

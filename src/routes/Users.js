@@ -2,19 +2,10 @@ import React, { Component } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
 import {
-  Layout, Menu, Breadcrumb, Table, Button, Progress, Radio, Input, Slider,
-  Form, Modal, Select, message, Icon, Dropdown, Tooltip,
+  Layout, Menu, Breadcrumb, Table, Button, Input,
+  Form, Modal, Select, Icon, Dropdown,
   Tabs,
 } from 'antd';
-import { editTestWeight } from '../services/common';
-import { getZPercent, ZScore, realMeanStd } from '../utils/utils';
-import {
-   Chart,
-   Geom,
-   Tooltip as BTooltip,
-   Axis,
-   Legend,
- } from "bizcharts";
 
 
 const { TabPane } = Tabs;
@@ -159,8 +150,6 @@ const UserAttributes = ({ attributes=[], dispatch }) => {
               }}>删除</Button>
             </>
           )
-
-          return JSON.stringify(row)
         }
       },
     ]} pagination={false} />
@@ -168,9 +157,28 @@ const UserAttributes = ({ attributes=[], dispatch }) => {
 }
 
 
-const UserList = ({ dispatch }) => {
+const UserList = ({ users=[], page=1, dispatch }) => {
   return (
-    <div>UserList</div>
+    <Table rowKey={row => row.user_id} dataSource={users} columns={[
+      {
+        title: 'ID',
+        dataIndex: 'user_id',
+        key: 'user_id',
+      },
+      {
+        title: '名称',
+        dataIndex: 'name',
+        key: 'name',
+      },
+      {
+        title: '更新时间',
+        dataIndex: 'modified',
+        key: 'modified',
+        render(value) {
+          return ('' + new Date(value * 1000)).split(' ').slice(0, 5).join(' ')
+        }
+      },
+    ]} pagination={false} />
   )
 }
 
@@ -183,12 +191,16 @@ class Users extends Component {
   }
 
   componentDidMount() {
-    this.props.dispatch({ type: 'common/getUserAttributes' })
+    const { dispatch } = this.props
+    dispatch({ type: 'common/getUserAttributes' })
+    dispatch({ type: 'common/getUserList', attr_name: 'user_id', page: 1 })
   }
   
   render() {
     const {
       attributes=[],
+      users=[],
+      userPage=1,
       editAttribute,
       env,
       dispatch
@@ -235,7 +247,7 @@ class Users extends Component {
                 <UserAttributes attributes={attributes} dispatch={dispatch} />
               </TabPane>
               <TabPane tab="用户列表" key="users">
-                <UserList dispatch={dispatch} />
+                <UserList dispatch={dispatch} users={users} page={userPage} />
               </TabPane>
             </Tabs>
           </div>

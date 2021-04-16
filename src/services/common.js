@@ -76,3 +76,12 @@ export function removeUserAttribute(attr_name) {
   });
 }
 
+export function getUserList(attr_name, page=1) {
+  return request(`/ab/users?attr_name=${attr_name}&page=${page}`);
+}
+
+export function getUserInfo(user_id) {
+  return request(`/ab/user/${user_id}`);
+}
+
+
