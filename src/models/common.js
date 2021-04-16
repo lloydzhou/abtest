@@ -201,7 +201,7 @@ export default {
     *getUserList({ attr_name, page }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getUserList, attr_name, page)
       if (!err && data.code === 0) {
-        const users = data.attributes.length ? data.users.chunk(3).map(item => {
+        const users = data.users.length ? data.users.chunk(3).map(item => {
           const [user_id, name, modified] = item
           return {
             user_id, name, modified,
