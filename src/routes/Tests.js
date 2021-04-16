@@ -244,7 +244,7 @@ const NewVersionFrom = Form.create()(({ newVersion, dispatch, testWeight, form }
   const { getFieldDecorator } = form;
   return (
     <Modal
-      title={`给${newVersion ? newVersion.name : ''}新增指标`}
+      title={`给${newVersion ? newVersion.name : ''}新增版本`}
       visible={!!newVersion}
       key={newVersion && newVersion.var_name || 'NewVersionFrom'}
       width={600}
@@ -547,6 +547,7 @@ class Tests extends Component {
           >
             <Menu.Item key="layers"><Link to="/layers">流量</Link></Menu.Item>
             <Menu.Item key="tests">实验</Menu.Item>
+            <Menu.Item key="users"><Link to="/users">用户</Link></Menu.Item>
           </Menu>
         </Header>
         <Content style={{ padding: '0 50px' }}>
@@ -704,7 +705,7 @@ class Tests extends Component {
             ]} pagination={false} />
           </div>
         </Content>
-        <Footer style={{ textAlign: 'center' }}>quzhaopinapp.com ©2019</Footer>
+        <Footer style={{ textAlign: 'center' }}>lloydzhou@gmail.com ©2021</Footer>
       </Layout>
     )
   }

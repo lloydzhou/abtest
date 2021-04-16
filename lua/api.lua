@@ -147,6 +147,37 @@ r:get('/ab/versions', function(params)
   })
 end)
 
+r:get('/ab/attrs', function(params)
+  local red = connect_redis()
+  local res, err = red:sort(
+    'user_attr_set', 'by', 'user_attr_name:*->created',
+    'get', '#', 'get', 'user_attr_name:*->name',
+    'get', 'user_attr_name:*->type',
+    'get', 'user_attr_name:*->created',
+    'get', 'user_attr_name:*->modified'
+  )
+  if err then
+    close_redis(red)
+    return response(500, 1, 'get attributes failed')
+  end
+  close_redis(red)
+  response(200, 0, "success", {
+    attributes=res,
+  })
+end)
+
+r:post('/ab/attrs', function(params)
+  local attr_name = arg('attr_name')
+  local name = arg('name')
+  local type = arg('type')
+  evalscript('save-attribute', 0, attr_name, name, type)
+end)
+
+r:delete('/ab/attrs', function(params)
+  local attr_name = arg('attr_name')
+  evalscript('remove-attribute', 0, attr_name)
+end)
+
 r:get('/ab/targets', function(params)
   local red = connect_redis()
   local res, err = red:sort(

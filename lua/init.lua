@@ -147,7 +147,7 @@ local scripts = {
     if not res then
         return {-1, "save target failed"}
     end
-    
+
     return {1, 'add target success'}
   ]],
   ['layer-weight'] = [[
@@ -155,22 +155,22 @@ local scripts = {
     if layer_exists == 0 then
         return {-1, "layer not exists"}
     end
-    
+
     local var_exists = redis.call("sismember", "vars", ARGV[2])
     if var_exists == 0 then
         return {-1, "var_name not exists"}
     end
-    
+
     local res = redis.call("hset", "var:" .. ARGV[2], 'weight', ARGV[3])
     if res ~= 0 then
         return {-1, "save weight to var failed"}
     end
-    
+
     local res = redis.call("zadd", "layer:" .. ARGV[1], ARGV[3], ARGV[2])
     if res ~= 0 then
         return {-1, "add var to layer failed"}
     end
-    
+
     return {1, 'edit layer success'}
   ]],
   ['test-weight'] = [[
@@ -178,22 +178,22 @@ local scripts = {
     local value = ARGV[2]
     local weight = ARGV[3]
     local name = ARGV[4]
-    
+
     local var_exists = redis.call("sismember", "vars", var_name)
     if var_exists == 0 then
         return {-1, "test not exists"}
     end
-    
+
     local res = redis.call("zadd", "value:" .. var_name, weight, value)
     if not res then
         return {-1, "add version to test failed"}
     end
-    
+
     local res = redis.call("sadd", "versions", var_name .. ":" .. value)
     if not res then
         return {-1, "add version to versions failed"}
     end
-    
+
     local time = redis.call("time")
     local res = redis.call(
         "hmset", "version:" .. var_name .. ":" .. value,
@@ -203,28 +203,28 @@ local scripts = {
     if not res then
         return {-1, "save weight to version failed"}
     end
-    
+
     local res = redis.call("del", "user:value:" .. var_name)
     if res ~= 0 then
         return {-1, "remove user value failed"}
     end
-    
+
     return {1, 'edit version success'}
   ]],
   ['traffic'] = [[
     local var_name = ARGV[1]
-    
+
     local var_exists = redis.call("sismember", "vars", var_name)
     if var_exists == 0 then
         return {-1, "var_name not exists"}
     end
-    
+
     local values = redis.call("zrange", "value:" .. var_name, 0, -1)
     local targets = redis.call("smembers", "targets:" .. var_name)
-    
+
     local args = {"sort", "days:" .. var_name, "by", "*", "limit", 0, 100, "get", "#"}
     local i, j, value, target
-    
+
     for i, value in ipairs(values) do
         table.insert(args, "get")
         table.insert(args, "day:*->" .. var_name .. ":" .. value .. ":pv")
@@ -234,21 +234,21 @@ local scripts = {
         end
     end
     table.insert(args, "desc")
-    
+
     local traffic = redis.call(unpack(args))
-    
+
     return {values, targets, traffic, args}
   ]],
   ['rate'] = [[
     local var_name = ARGV[1]
-    
+
     local var_exists = redis.call("sismember", "vars", var_name)
     if var_exists == 0 then
         return {-1, "var_name not exists"}
     end
-    
+
     local targets = redis.call("smembers", "targets:" .. var_name)
-    
+
     local args = {
         'sort', 'value:' .. var_name, 'by', 'nosort',
         'get', '#',
@@ -263,7 +263,7 @@ local scripts = {
         'get', 'version:' .. var_name .. ':*->uv:std',
     }
     local j, target
-    
+
     for j, target in ipairs(targets) do
         table.insert(args, 'get')
         table.insert(args, 'version:' .. var_name .. ':*->' .. target .. ':count')
@@ -278,45 +278,45 @@ local scripts = {
         table.insert(args, 'get')
         table.insert(args, 'version:' .. var_name .. ':*->' .. target .. ':std')
     end
-    
+
     local versions = redis.call(unpack(args))
-    
+
     return {versions, targets, args}
   ]],
   ['remove-test'] = [[
     local var_name = ARGV[1]
     local i, j, value, target
-    
+
     local var_exists = redis.call("sismember", "vars", var_name)
     if var_exists == 0 then
         return {-1, "test not exists"}
     end
-    
+
     local res = redis.call("hmget", "var:" .. var_name, "layer", "status")
     local layer, status = unpack(res)
     if not layer or not status then
         return {-1, "can not get layer and status for var_name: " .. var_name}
     end
-    
+
     if status ~= "stoped" then
         return {-1, "can not remove var_name when status not stoped"}
     end
-    
+
     -- 删除当前层下面的实验
     redis.call("zrem", "layer:" .. layer, var_name)
-    
+
     -- 删除全局的var_name
     redis.call("srem", "vars", var_name)
-    
+
     -- 删除var_name
     redis.call("del", "var:" .. var_name)
-    
+
     -- 删除user value
     redis.call("del", "user:value:" .. var_name)
-    
+
     -- 删除流量统计数据
     redis.call("del", "days:" .. var_name)
-    
+
     -- 找到对应的value(版本)，删除全局的版本以及存储这个实验版本的key
     local targets = redis.call("smembers", "targets:" .. var_name)
     for j, target in ipairs(targets) do
@@ -324,7 +324,7 @@ local scripts = {
         redis.call("del", "target:" .. target)
     end
     redis.call("del", "targets:" .. var_name)
-    
+
     -- 找到对应的value(版本)，删除全局的版本以及存储这个实验版本的key
     local values = redis.call("zrange", "value:" .. var_name, 0, -1)
     for i, value in ipairs(values) do
@@ -336,9 +336,53 @@ local scripts = {
         end
     end
     redis.call("del", "value:" .. var_name)
-    
+
     return {1, 'remove var_name success'}
-  ]]
+  ]],
+  ['save-attribute'] = [[
+    local attr_name = ARGV[1]
+    local name = ARGV[2]
+    local type = ARGV[3]
+
+    local time = redis.call("time")
+    local res = redis.call("zadd", "user_attr_set", time[1], attr_name)
+    if not res then
+        return {-1, "add attr_name to attributes failed"}
+    end
+
+    local created = time[1]
+    local res = redis.call("hget", "user_attr_name:" .. attr_name, "created")
+    -- return {-1, "res" .. tostring(res)}
+    if res then
+        created = res
+    end
+
+    local res = redis.call(
+        "hmset", "user_attr_name:" .. attr_name,
+        "attribute", attr_name, "name", name, "type", type,
+        "created", created, "modified", time[1]
+    )
+    if not res then
+        return {-1, "save attribute failed"}
+    end
+
+    return {1, 'add attribute success'}
+  ]],
+  ['remove-attribute'] = [[
+    local attr_name = ARGV[1]
+
+    local res = redis.call("del", "user_attr_name:" .. attr_name)
+    if not res then
+        return {-1, "remove attr_name failed"}
+    end
+
+    local res = redis.call("zrem", "user_attr_set", attr_name)
+    if not res then
+        return {-1, "remove attr_name from attributes failed"}
+    end
+
+    return {1, 'remove attribute success'}
+  ]],
 }
 local script_sha = {}
 get_sha_by_script_name = function(script_name)

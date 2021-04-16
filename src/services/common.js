@@ -60,3 +60,19 @@ export function getTestTraffic(var_name) {
   return request(`/ab/test/traffic?var=${var_name}`);
 }
 
+export function getUserAttributes() {
+  return request('/ab/attrs');
+}
+
+export function saveUserAttribute(attr_name, name, type) {
+  return request(`/ab/attrs?attr_name=${attr_name}&name=${name}&type=${type}`, {
+    method: 'POST',
+  });
+}
+
+export function removeUserAttribute(attr_name) {
+  return request(`/ab/attrs?attr_name=${attr_name}`, {
+    method: 'DELETE'
+  });
+}
+

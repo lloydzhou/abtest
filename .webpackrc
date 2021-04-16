@@ -8,8 +8,9 @@
   "ignoreMomentLocale": true,
   "proxy": {
     "/ab": {
-      "target": "https://ab.quzhaopinapp.com/",
+      // "target": "https://ab.quzhaopinapp.com/",
       // "target": "http://localhost:8011/",
+      "target": "http://localhost:8032/",
       "changeOrigin": true
     }
   }

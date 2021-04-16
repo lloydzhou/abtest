@@ -11,6 +11,9 @@ import {
   testAction,
   getTargets,
   addTarget,
+  getUserAttributes,
+  saveUserAttribute,
+  removeUserAttribute,
 } from '../services/common'
 import { getEnv, setEnv } from '../utils/request'
 
@@ -169,12 +172,37 @@ export default {
         yield put({ type: 'save', payload: {newTargetVarName: false}})
       }
     },
+    *getUserAttributes({ }, { put, call }) { // eslint-disable-line
+      const { err, data } = yield call(getUserAttributes)
+      if (!err && data.code === 0) {
+        const attributes = data.attributes.length ? data.attributes.chunk(5).map(item => {
+          const [attribute, name, type, created, modified] = item
+          return {
+            attribute, name, type, created, modified,
+          }
+        }) : []
+        yield put({ type: 'save', payload: { attributes, editAttribute: false }})
+      }
+    },
+    *saveUserAttribute({ attribute, name, typ }, { put, call }) { // eslint-disable-line
+      const { err, data } = yield call(saveUserAttribute, attribute, name, typ)
+      if (!err && data.code === 0) {
+        yield put({ type: 'getUserAttributes' })
+      }
+    },
+    *removeUserAttribute({ attribute }, { put, call }) { // eslint-disable-line
+      const { err, data } = yield call(removeUserAttribute, attribute)
+      if (!err && data.code === 0) {
+        yield put({ type: 'getUserAttributes' })
+      }
+    },
     *changeEnv({ env }, { put, select }) {
       const { env: oldEnv } = yield select(s => s.common)
       if (oldEnv !== env) {
         setEnv(env)
-        yield put({ type: 'save', payload: {env, ready: false}})
-        yield put({ type: 'init' })
+        window.location.reload()
+        // yield put({ type: 'save', payload: {env, ready: false}})
+        // yield put({ type: 'init' })
       }
     },
     *init({ }, {put, call, select}) { // eslint-disable-line

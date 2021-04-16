@@ -122,6 +122,7 @@ class Layers extends Component {
           >
             <Menu.Item key="layers">流量层</Menu.Item>
             <Menu.Item key="tests"><Link to="/tests">实验</Link></Menu.Item>
+            <Menu.Item key="users"><Link to="/users">用户</Link></Menu.Item>
           </Menu>
         </Header>
         <Content style={{ padding: '0 50px' }}>
@@ -183,7 +184,7 @@ class Layers extends Component {
             ]} pagination={false} />
           </div>
         </Content>
-        <Footer style={{ textAlign: 'center' }}>quzhaopinapp.com ©2019</Footer>
+        <Footer style={{ textAlign: 'center' }}>lloydzhou@gmail.com ©2021</Footer>
       </Layout>
     )
   }
