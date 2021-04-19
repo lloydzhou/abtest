@@ -237,7 +237,7 @@ local scripts = {
 
     local traffic = redis.call(unpack(args))
 
-    return {values, targets, traffic, args}
+    return {values, targets, traffic}
   ]],
   ['rate'] = [[
     local var_name = ARGV[1]
