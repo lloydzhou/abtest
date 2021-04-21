@@ -249,7 +249,7 @@ r:get('/ab/var', function(params)
   local var_exists, err = red:sismember("vars", var_name)
   if err then
     close_redis(red)
-    return response(500, -1, 'get var_name failed', var_name)
+    return response(500, -1, 'get var_name failed: ' .. var_name)
   end
   if var_exists == 0 then
       close_redis(red)
