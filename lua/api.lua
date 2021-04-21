@@ -378,7 +378,14 @@ r:post('/ab/track', function(params)
                 local var_name, err = red:hget("target:" .. target, "var_name")
                 if not err and var_name then
                     local value, err = red:hget("user:value:" .. var_name, user_id)
-                    if value then
+                    if not err and value == ngx.null then
+                        -- 尝试使用备份的值
+                        local bvalue, err = red:hget("user:value:" .. var_name .. ":backup", user_id)
+                        if not err and bvalue ~= ngx.null then
+                            value = bvalue
+                        end
+                    end
+                    if not err and value ~= ngx.null then
                         local key = var_name .. ":" .. value .. ":" .. target
                         -- 1. 在实验级别增加当天的日期；
                         -- 2. 在实验的hashset上以指标为target自增pv和uv

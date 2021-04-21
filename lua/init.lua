@@ -204,7 +204,25 @@ local scripts = {
         return {-1, "save weight to version failed"}
     end
 
-    local res = redis.call("del", "user:value:" .. var_name)
+    -- backup old user value
+    local key = "user:value:" .. var_name
+    local backup_key = key .. ":backup"
+    local cursor = "0"
+    local result = nil
+    local data = nil
+    local args = nil
+    repeat
+        result = redis.call("hscan", key, cursor, "count", 50)
+        cursor, data = unpack(result)
+        args = {"hmset", backup_key}
+        for i=1, #data, 2 do
+            table.insert(args, data[i])
+            table.insert(args, data[i + 1])
+        end
+        redis.call(unpack(args))
+    until cursor == "0"
+
+    local res = redis.call("del", key)
     if res ~= 0 then
         return {-1, "remove user value failed"}
     end
