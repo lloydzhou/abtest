@@ -369,6 +369,7 @@ r:post('/ab/track', function(params)
   if data then
     local params = cjson.decode(data)
     local count, success = 0, 0
+    local skip = {}
     local red = connect_redis()
     for target, inc in pairs(params) do
         if inc > 0 then
@@ -393,13 +394,19 @@ r:post('/ab/track', function(params)
                         red:hincrby("day:" .. today, key .. ":pv", 1)
                         red:zincrby("track:" .. key, inc, user_id)
                         success = success + 1
+                    else
+                        table.insert(skip, {target=target, inc=inc, user_id=user_id, err="version"})
                     end
+                else
+                    table.insert(skip, {target=target, inc=inc, user_id=user_id, err="var_name"})
                 end
+            else
+                table.insert(skip, {target=target, inc=inc, user_id=user_id, err="target_exists"})
             end
         end
     end
     close_redis(red)
-    response(200, 0, "success", {count=count, success=success})
+    response(200, 0, "success", {count=count, success=success, skip=skip})
   end
 end)
 
