@@ -253,18 +253,18 @@ r:get('/ab/var', function(params)
   end
   if var_exists == 0 then
       close_redis(red)
-      return response(500, -1, "var_name not exists", var_name)
+      return response(500, -1, "var_name not exists: " .. var_name)
   end
 
   local value, err = red:hget("user:value:" .. var_name, user_id)
   if err then
     close_redis(red)
-    return response(500, -1, 'get user value failed', var_name)
+    return response(500, -1, 'get user value failed: ' .. var_name)
   end
   local res, err = red:hmget("var:" .. var_name, "type", "name", "layer", "status", "weight", "default")
   if err then
     close_redis(red)
-    return response(500, -1, 'get var attribute failed', var_name)
+    return response(500, -1, 'get var attribute failed: ' .. var_name)
   end
   local typ, test, layer, status, layer_weight, default = unpack(res)
 
@@ -291,7 +291,7 @@ r:get('/ab/var', function(params)
       )
       if err then
         close_redis(red)
-        return response(500, -1, "get layer weights failed", layer)
+        return response(500, -1, "get layer weights failed: " .. layer)
       end
       local i, v, var, val, weight
       for i, v in ipairs(layer_weights) do
@@ -315,7 +315,7 @@ r:get('/ab/var', function(params)
 
           if err then
             close_redis(red)
-            return response(500, -1, "get weights failed", var_name)
+            return response(500, -1, "get weights failed: " .. var_name)
           end
           local real_weight = start_weight
           for i, v in ipairs(weights) do
