@@ -379,12 +379,12 @@ r:post('/ab/track', function(params)
                 if not err and var_name then
                     local value, err = red:hget("user:value:" .. var_name, user_id)
                     if value then
-                        local key = "track:" .. var_name .. ":" .. value .. ":" .. target
+                        local key = var_name .. ":" .. value .. ":" .. target
                         -- 1. 在实验级别增加当天的日期；
                         -- 2. 在实验的hashset上以指标为target自增pv和uv
                         red:sadd("days:" .. var_name, today)
-                        red:hincrby("day:" .. today, var_name .. ":" .. value .. ":" .. target .. ":pv", 1)
-                        red:zincrby(key, inc, user_id)
+                        red:hincrby("day:" .. today, key .. ":pv", 1)
+                        red:zincrby("track:" .. key, inc, user_id)
                         success = success + 1
                     end
                 end
