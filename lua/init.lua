@@ -331,6 +331,7 @@ local scripts = {
 
     -- 删除user value
     redis.call("del", "user:value:" .. var_name)
+    redis.call("del", "user:value:" .. var_name .. ":backup")
 
     -- 删除流量统计数据
     redis.call("del", "days:" .. var_name)
