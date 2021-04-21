@@ -394,6 +394,7 @@ r:post('/ab/track', function(params)
                         red:hincrby("day:" .. today, key .. ":pv", 1)
                         red:zincrby("track:" .. key, inc, user_id)
                         success = success + 1
+                        table.insert(skip, {target=target, inc=inc, user_id=user_id})
                     else
                         table.insert(skip, {target=target, inc=inc, user_id=user_id, err="version"})
                     end
@@ -406,7 +407,7 @@ r:post('/ab/track', function(params)
         end
     end
     close_redis(red)
-    response(200, 0, "success", {count=count, success=success, skip=skip})
+    response(200, 0, "success", {count=count, success=success, data=skip})
   end
 end)
 
