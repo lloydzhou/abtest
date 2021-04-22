@@ -5,6 +5,7 @@ RUN htpasswd -nb abadmin abpasswd > /tmp/htpasswd
 # 利用openresty里面的luajit编译两个lua脚本
 FROM openresty/openresty:alpine-apk as openresty
 COPY lua /lua
+COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
 RUN cd /usr/local/openresty/nginx/ \
   && luajit -bg /lua/init.lua ./init.ljbc \
   && luajit -bg /lua/init_worker.lua ./init_worker.ljbc \
@@ -34,8 +35,7 @@ RUN mkdir -p /var/run/openresty \
     && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
 
 RUN echo '[[ ! -z "$HTPASSWD" ]] && echo "$HTPASSWD" > /etc/nginx/htpasswd || echo no htpasswd env set && openresty && redis-server' > /start.sh \
-  && chmod +x /start.sh \
-  && sed -i '1s/^/env INTERVAL;\n/' /usr/local/openresty/nginx/conf/nginx.conf
+  && chmod +x /start.sh
 
 
 CMD ["sh", "-c", "/start.sh"]
