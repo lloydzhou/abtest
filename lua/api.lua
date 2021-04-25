@@ -148,8 +148,8 @@ r:get('/ab/versions', function(params)
 end)
 
 r:get('/ab/users', function(params)
-  local attr_name = arg('attr_name')
-  local page = tonumber(arg('page'))
+  local attr_name = params.attr_name
+  local page = tonumber(params.page or 1)
   local red = connect_redis()
   local res, err = red:sort(
     'user_attr:' .. attr_name, 'by', 'user_attr:*->created',
@@ -178,6 +178,40 @@ r:get('/ab/user/:user_id', function(params)
   response(200, 0, "success", {
     user=res,
   })
+end)
+
+r:post('/ab/user/:user_id', function(params)
+  local user_id = params.user_id
+  local red = connect_redis()
+
+  local time = ngx.time()
+  local created = time
+  local res, err = red:hget("user_attr:" .. user_id, "created")
+  if not err and res ~= ngx.null then
+      created = res
+  end
+
+  params['created'] = created
+  params['modified'] = time
+
+  local args = {'user_attr:' .. user_id}
+  for key, value in pairs(params) do
+    local res, err = red:zadd('user_attr:' .. key, time, user_id)
+    if err then
+      close_redis(red)
+      return response(500, 1, 'set user attribute failed')
+    end
+    table.insert(args, key)
+    table.insert(args, value)
+  end
+
+  local res, err = red:hmset(unpack(args))
+  if err then
+    close_redis(red)
+    return response(500, 1, 'set user info failed')
+  end
+  close_redis(red)
+  response(200, 0, "success")
 end)
 
 r:get('/ab/attrs', function(params)
@@ -411,12 +445,17 @@ r:post('/ab/track', function(params)
   end
 end)
 
+local post_args = {}
+if ngx.req.get_headers()['Content-Type'] == 'application/json' then
+  post_args = cjson.decode(ngx.req.get_body_data())
+else
+  post_args = ngx.req.get_post_args()
+end
 local ok, errmsg = r:execute(
   ngx.var.request_method,
   ngx.var.uri,
   ngx.req.get_uri_args(),  -- all these parameters
-  ngx.req.get_post_args(), -- will be merged in order
-  {version = '1.0'}         -- into a single "params" table
+  post_args -- will be merged in order
 )
 
 if not ok then

@@ -24,7 +24,6 @@ ENV PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/
 ENV HTPASSWD=
 ENV INTERVAL=60
 
-COPY ab.conf /etc/nginx/conf.d/default.conf
 COPY dist /var/www/html
 
 COPY --from=openresty /usr/local/openresty /usr/local/openresty
