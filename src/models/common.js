@@ -198,6 +198,10 @@ export default {
         yield put({ type: 'getUserAttributes' })
       }
     },
+    *setAttribute({ attribute }, { put, call }) { // eslint-disable-line
+      yield put({ type: 'save', payload: { attribute, activeKey: 'users' } })
+      yield put({ type: 'getUserList', attr_name: attribute, page: 1 })
+    },
     *getUserList({ attr_name, page }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getUserList, attr_name, page)
       if (!err && data.code === 0) {

@@ -95,7 +95,16 @@ const NewAttributeFrom = Form.create()(({ editAttribute, dispatch, form }) => {
 
 const UserAttributes = ({ attributes=[], dispatch }) => {
   return (
-    <Table rowKey={row => row.attribute} dataSource={attributes} columns={[
+    <Table rowKey={row => row.attribute} dataSource={attributes}
+    onRow={(record, rowIndex) => {
+      return {
+        onClick: event => {
+          // console.log(event, record, rowIndex)
+          dispatch({ type: 'common/setAttribute', attribute: record.attribute })
+        }, // click row
+      };
+    }}
+    columns={[
       {
         title: '字段',
         dataIndex: 'attribute',
@@ -203,7 +212,8 @@ class Users extends Component {
       userPage=1,
       editAttribute,
       env,
-      dispatch
+      dispatch,
+      activeKey="attrs",
     } = this.props
     return (
       <Layout className="layout">
@@ -242,7 +252,9 @@ class Users extends Component {
           </Breadcrumb>
           <NewAttributeFrom dispatch={dispatch} editAttribute={editAttribute} />
           <div style={{ background: '#fff', padding: 24, minHeight: 600 }}>
-            <Tabs defaultActiveKey="attrs">
+            <Tabs activeKey={activeKey} onChange={e => {
+              dispatch({ type: 'common/save', payload: { activeKey: e } })
+            }}>
               <TabPane tab="用户属性" key="attrs">
                 <UserAttributes attributes={attributes} dispatch={dispatch} />
               </TabPane>
