@@ -311,7 +311,7 @@ r:get('/ab/var', function(params)
       -- return {-1, "test weight is zero"}
       -- 流量层分配流量为0，返回默认值，不记录pv等信息
       close_redis(red)
-      return response(200, 1, "success", {
+      return response(200, 0, "success", {
           type=typ, test=test, layer=layer, value=default, hash=hash,
       })
   end
@@ -370,7 +370,7 @@ r:get('/ab/var', function(params)
       else
           -- 流量层内不在实验对应的流量范围，使用默认值
           close_redis(red)
-          return response(200, 1, "success", {
+          return response(200, 0, "success", {
               type=typ, test=test, layer=layer, value=default, hash=hash,
           })
       end
@@ -390,7 +390,7 @@ r:get('/ab/var', function(params)
   red:zincrby("uv:" .. version, 1, user_id)
 
   close_redis(red)
-  return response(200, 1, "success", {
+  return response(200, 0, "success", {
       type=typ, test=test, layer=layer, value=value, hash=hash,
   })
 end)
