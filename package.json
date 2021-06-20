@@ -1,5 +1,6 @@
 {
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "set port=8000 && roadhog server",
     "build": "roadhog build && sw-precache --config=sw-precache-config.js",

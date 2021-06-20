@@ -6,12 +6,67 @@ import {
   Form, Modal, Select, Icon, Dropdown,
   Tabs,
 } from 'antd';
+import { ANDCondition, ORCondition, Condition } from '../lib/condition'
 
 
 const { TabPane } = Tabs;
 const { Header, Content, Footer } = Layout;
 const FormItem = Form.Item;
 const Option = Select.Option;
+
+
+const ATTRIBUTE_OPS = 'EQ,LT,GT,LE,GE,NE,LIKE,STARTWITH,ENDWITH,NOTLIKE,NOTSTARTWITH,NOTENDWITH,ISNULL,NOTNULL'.split(',')
+const LOGIC_OPS = 'AND,OR,NOT'.split(',')
+
+const OP = ({op}) => <div>操作{op}</div>
+
+const AttributeConditionComponent = ({ condition }) => {
+  return (
+    <>
+      AttributeConditionComponent 
+      {condition.toString()}
+    </>
+  )
+}
+const ConditionComponent = ({ condition }) => {
+  const { op, target=[] } = condition
+  return <>
+    {target.map((item, index) => {
+      // console.log('op', op, ATTRIBUTE_OPS.indexOf(op), LOGIC_OPS.indexOf(op), item, index)
+      return (
+        <div key={index}>
+          {index > 0 ? <OP op={op} /> : null}
+          {ATTRIBUTE_OPS.indexOf(item.op) > -1
+            ? <AttributeConditionComponent condition={item} />
+            : LOGIC_OPS.indexOf(item.op) > -1 ? <ConditionComponent condition={item} /> : item.toString()}
+        </div>
+      )
+    })}
+    <OP op={op} />
+  </>
+}
+
+
+class AdvanceFilter extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      condition: new ANDCondition(new ORCondition(new Condition('EQ', 'user_id', '')))
+    }
+  }
+  render() {
+    const { condition } = this.state
+    
+    return (
+      <>
+        <div>
+          {condition.toString()}
+        </div>
+        <ConditionComponent condition={condition} />
+      </>
+    );
+  }
+}
 
 
 const NewAttributeFrom = Form.create()(({ editAttribute, dispatch, form }) => {
@@ -256,6 +311,7 @@ class Users extends Component {
               dispatch({ type: 'common/save', payload: { activeKey: e } })
             }}>
               <TabPane tab="用户属性" key="attrs">
+                <AdvanceFilter />
                 <UserAttributes attributes={attributes} dispatch={dispatch} />
               </TabPane>
               <TabPane tab="用户列表" key="users">
