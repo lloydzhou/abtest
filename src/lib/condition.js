@@ -28,7 +28,7 @@ export class Condition{
     this.target = target
   }
   toString(){
-    console.debug('toString', this.op, this.target)
+    // console.debug('toString', this.op, this.target)
     return `${this.op}(${this.target.map(i => i.toString()).join(',')})`
   }
 }
