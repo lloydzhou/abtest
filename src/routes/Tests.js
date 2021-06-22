@@ -14,6 +14,7 @@ import {
    Axis,
    Legend,
  } from "bizcharts";
+import ConditionBuilder from '../components/ConditionBuilder'
 
 
 const { Header, Content, Footer } = Layout;
@@ -21,14 +22,14 @@ const FormItem = Form.Item;
 const Option = Select.Option;
 
 
-const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatch, form }) => {
+const NewTestFrom = Form.create()(({ attributes=[], layers=[], visible, layerWeight={}, dispatch, form }) => {
   const { getFieldDecorator } = form;
   return (
     <Modal
       title="新增实验"
       visible={visible}
       key="NewTestFrom"
-      width={600}
+      width={700}
       onCancel={e => {
         dispatch({ type: 'common/save', payload: {showNewTestForm: false } })
       }}
@@ -139,6 +140,19 @@ const NewTestFrom = Form.create()(({ layers=[], visible, layerWeight={}, dispatc
             ],
           })(
             <Input />
+          )}
+        </FormItem>
+        <FormItem
+          labelCol={{span: 6}}
+          wrapperCol={{ span: 18 }}
+          label="属性"
+        >
+          {getFieldDecorator('condition', {
+            rules: [
+              { required: false, message: '变量默认值' },
+            ],
+          })(
+            <ConditionBuilder attributes={attributes} />
           )}
         </FormItem>
         <FormItem
@@ -528,6 +542,7 @@ class Tests extends Component {
   
   render() {
     const {
+      attributes=[],
       tests=[], layers=[], versions=[], layerWeight={}, testWeight={},
       newTargetVarName, newVersion, env,
       showTestRate, rateTargets=[], rateVersions=[],
@@ -570,7 +585,7 @@ class Tests extends Component {
             </Breadcrumb.Item>
             <Breadcrumb.Item>实验</Breadcrumb.Item>
           </Breadcrumb>
-          <NewTestFrom dispatch={dispatch} visible={showNewTestForm} layers={layers} layerWeight={layerWeight} />
+          <NewTestFrom dispatch={dispatch} visible={showNewTestForm} layers={layers} layerWeight={layerWeight} attributes={attributes} />
           <TestWeightFrom editTest={editTest} dispatch={dispatch} testWeight={testWeight[editTest && editTest._var_name]}/>
           <NewTargetFrom newTargetVarName={newTargetVarName} dispatch={dispatch} />
           <NewVersionFrom newVersion={newVersion} testWeight={testWeight} dispatch={dispatch} />
@@ -613,6 +628,12 @@ class Tests extends Component {
               //   dataIndex: 'default_value',
               //   key: 'default_value',
               // },
+              {
+                title: '过滤属性',
+                dataIndex: 'condition',
+                key: 'condition',
+                width: 150,
+              },
               {
                 title: '流量',
                 dataIndex: 'var_name',

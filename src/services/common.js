@@ -20,8 +20,8 @@ export function getTests() {
   return request('/ab/tests');
 }
 
-export function addTest(layer, layer_weight, var_name, test_name, type, default_value) {
-  return request(`/ab/test/add?layer=${layer}&layer_weight=${layer_weight}&var=${var_name}&test_name=${test_name}&type=${type}&default=${default_value}`, {
+export function addTest(layer, layer_weight, var_name, test_name, type, default_value, condition) {
+  return request(`/ab/test/add?layer=${layer}&layer_weight=${layer_weight}&var=${var_name}&test_name=${test_name}&type=${type}&default=${default_value}&condition=${condition}`, {
     method: 'POST'
   });
 }

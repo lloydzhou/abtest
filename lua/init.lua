@@ -62,6 +62,7 @@ local scripts = {
     local name = ARGV[4]
     local typ = ARGV[5]
     local default = ARGV[6]
+    local condition = ARGV[7]
     
     local layer_exists = redis.call("sismember", "layers", layer)
     if layer_exists == 0 then
@@ -87,7 +88,7 @@ local scripts = {
     local res = redis.call(
         "hmset", "var:" .. var_name,
         "layer", layer, "name", name,
-        "weight", weight, "type", typ, "default", default,
+        "weight", weight, "type", typ, "default", default, "condition", condition,
         "status", "init", "created", time[1], "modified", time[1]
     )
     if not res then

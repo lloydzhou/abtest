@@ -53,10 +53,10 @@ export default {
     *getTests({ }, { put, call }) { // eslint-disable-line
       const { err, data } = yield call(getTests)
       if (!err && data.code === 0) {
-        const tests = data.tests.length ? data.tests.chunk(9).map(item => {
-          const [var_name, name, layer, var_type, status, default_value, created, modified, weight] = item
+        const tests = data.tests.length ? data.tests.chunk(10).map(item => {
+          const [var_name, name, layer, var_type, status, default_value, created, modified, weight, condition] = item
           return {
-            var_name, name, layer, var_type, status, default_value, created, modified, weight: parseFloat(weight)
+            var_name, name, layer, var_type, status, default_value, created, modified, weight: parseFloat(weight), condition,
           }
         }) : [];
         const layerWeight = {}
@@ -71,8 +71,8 @@ export default {
         yield put({ type: 'save', payload: { tests, layerWeight } })
       }
     },
-    *addTest({ layer, layer_weight, var_name, test_name, var_type, default_value }, { put, call }) {
-      const { err, data } = yield call(addTest, layer, layer_weight, var_name, test_name, var_type, default_value)
+    *addTest({ layer, layer_weight, var_name, test_name, var_type, default_value, condition }, { put, call }) {
+      const { err, data } = yield call(addTest, layer, layer_weight, var_name, test_name, var_type, default_value, condition)
       if (!err && data.code === 0) {
         yield put({ type: 'getTests' })
         yield put({ type: 'getVersions' })
@@ -236,6 +236,7 @@ export default {
         yield put({ type: 'getLayers' })
         yield put({ type: 'getTargets' })
         yield put({ type: 'getVersions' })
+        yield put({ type: 'getUserAttributes' })
         yield put({ type: 'save', payload: {ready: true}})
       }
     }

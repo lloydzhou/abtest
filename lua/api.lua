@@ -39,6 +39,7 @@ r:get('/ab/tests', function(params)
     'get', 'var:*->layer', 'get', 'var:*->type', 'get', 'var:*->status',
     'get', 'var:*->default', 'get', 'var:*->created', 'get', 'var:*->modified',
     'get', 'var:*->weight',
+    'get', 'var:*->condition',
     'DESC'
   )
   if err then
@@ -84,8 +85,9 @@ r:post('/ab/test/add', function(params)
   local test_name = arg('test_name')
   local type = arg('type')
   local default = arg('default')
+  local condition = params.condition
 
-  evalscript('add-test', 0, layer_name, layer_weight, var_name, test_name, type, default)
+  evalscript('add-test', 0, layer_name, layer_weight, var_name, test_name, type, default, condition)
 end)
 
 r:post('/ab/test/weight', function(params)
