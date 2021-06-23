@@ -1,3 +1,4 @@
+local condition = require 'condition'
 local router = require 'router'
 local r = router.new()
 
@@ -297,12 +298,12 @@ r:get('/ab/var', function(params)
     close_redis(red)
     return response(500, -1, 'get user value failed: ' .. var_name)
   end
-  local res, err = red:hmget("var:" .. var_name, "type", "name", "layer", "status", "weight", "default")
+  local res, err = red:hmget("var:" .. var_name, "type", "name", "layer", "status", "weight", "default", "condition")
   if err then
     close_redis(red)
     return response(500, -1, 'get var attribute failed: ' .. var_name)
   end
-  local typ, test, layer, status, layer_weight, default = unpack(res)
+  local typ, test, layer, status, layer_weight, default, conditionstr = unpack(res)
 
   layer_weight = tonumber(layer_weight)
   if not layer then
@@ -319,6 +320,44 @@ r:get('/ab/var', function(params)
   end
 
   if value == ngx.null then
+      -- 找不到已经进入实验的记录，先判断属性，再计算流量
+      local status, c = pcall(condition.new, conditionstr)
+      if status == false then
+          -- status == false代表解析失败
+          close_redis(red)
+          return response(200, 0, "success", {
+              type=typ, test=test, layer=layer, value=default, hash=hash,
+          })
+      else
+          local res, err = red:hgetall('user_attr:' .. user_id)
+          if err then
+            close_redis(red)
+            return response(500, 1, 'get user info failed')
+          end
+          local user_info = {}
+          local i, v, var
+          for i, v in ipairs(res) do
+              if i % 2 == 1 then
+                  var = v
+              else
+                  user_info[var] = v
+              end
+          end
+          -- 解析成功的时候，如果验证是false也直接返回
+          local status, valid = pcall(condition.valid, c, user_info)
+          -- ngx.log(ngx.ERR, "status", status, "valid", valid, user_id, c, cjson.encode(user_info))
+          if status == false or valid == false then
+              close_redis(red)
+              return response(200, 0, "success", {
+                  type=typ, test=test, layer=layer, value=default, hash=hash,
+                  status=status, valid=valid,
+                  -- user_info=user_info,
+                  condition=conditionstr,
+              })
+          end
+          ngx.log(ngx.ERR, "status", status, "valid", valid, user_id, c, cjson.encode(user_info))
+      end
+
       local hash_weight, start_weight = (tonumber(hash) % 10000), 0
       local layer_weights, err = red:sort(
           "layer:" .. layer,

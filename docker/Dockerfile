@@ -10,6 +10,7 @@ RUN cd /usr/local/openresty/nginx/ \
   && luajit -bg /lua/init.lua ./init.ljbc \
   && luajit -bg /lua/init_worker.lua ./init_worker.ljbc \
   && luajit -bg /lua/router.lua ../lualib/router.ljbc \
+  && luajit -bg /lua/condition.lua ../lualib/condition.ljbc \
   && luajit -bg /lua/api.lua ./api.ljbc
 
 
