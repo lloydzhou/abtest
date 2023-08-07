@@ -7,8 +7,7 @@
 # AB测试项目（替换testin）
 
 ## 总体设计
-1. 参考magneto项目使用趣招聘的sessionid获取user_id
-2. 数据持久化到redis里面
+1. 数据持久化到redis里面
 3. 大量使用redis-lua脚本（基本每一个接口都是使用redis-lua脚本实现，提升性能的同时，能利用redis-lua脚本的原子性达到类似事务的效果）
 
 ## 接口
