@@ -60,5 +60,6 @@ export const postABTestTarget = (targets) => {
   })
 }
 
+// getEnv() --> "production/development"
 ```
 
