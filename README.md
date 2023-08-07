@@ -15,6 +15,14 @@
 2. 回传指标接口，直接存redis，需要在redis里面使用hashset存储对应的实验，以及实验指标，还有指标的值
 3. 增加一个接口直接输出对应实验的统计指标，开始的时候只要求有一个简单的列表就好了（TODO）
 
+## 后端部署
+```
+docker pull lloydzhou/ab
+
+docker run --rm -it -e INTERVAL=60 -e HTPASSWD='abadmin:$apr1$EJ2gyYP1$JirougEJ3sK/nF8aj63Zw1' -v `pwd`/data:/data:rw -p 8011:80 lloydzhou/ab
+
+docker run --rm -it -e INTERVAL=60 -e HTPASSWD="$(docker run --rm -it xmartlabs/htpasswd abadmin abpasswd )" -v `pwd`/data:/data/:rw -p 8011:80  lloydzhou/ab
+```
 
 ## client
 ```
