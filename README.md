@@ -15,3 +15,43 @@
 1. 获取变量接口（需要返回现在配置的层+实验+实验变量，以获取从属的实验版本）
 2. 回传指标接口，直接存redis，需要在redis里面使用hashset存储对应的实验，以及实验指标，还有指标的值
 3. 增加一个接口直接输出对应实验的统计指标，开始的时候只要求有一个简单的列表就好了（TODO）
+
+
+## client
+```
+// 获取AB测试的变量值
+export const getABTestValue = (name, defaultValue) => {
+  return request(`/ab/var?name=${name}`, {
+    headers: {
+      'X-User-Id': getUserId(),
+      'X-Env': getEnv(),
+    },
+  })
+    .then(({ data }) => {
+      if (data.code === 0) {
+        if (data.type === 'number') {
+          return parseInt(data.value, 10)
+        }
+        return data.value
+      }
+      return defaultValue
+    })
+    .catch((e) => {
+      return defaultValue
+    })
+}
+
+// 发送AB测试的指标
+export const postABTestTarget = (targets) => {
+  return request(`/ab/track`, {
+    method: 'POST',
+    body: targets,
+    headers: {
+      'X-User-Id': getUserId(),
+      'X-Env': getEnv(),
+    },
+  })
+}
+
+```
+
