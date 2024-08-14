@@ -1,10 +1,14 @@
 ABADMIN?=abadmin
 ABPASSWD?=abpasswd
+# Change base Docker image from Alpine to Debian
+# https://github.com/apache/kvrocks/pull/2348/files
+BASE?=apache/kvrocks:nightly-20240602-309ea7b
+TAG?=hawkeye:ab
 
 INTERVAL?=60
 
-build: dist/index.js
-	docker build -t hawkeye:ab -f docker/Dockerfile .
+build:
+	docker build --build-arg BASE=$(BASE) -t $(TAG) -f docker/Dockerfile .
 
 dist/index.js:
 	yarn run build
