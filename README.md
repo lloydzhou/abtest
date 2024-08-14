@@ -17,11 +17,11 @@
 
 ## 后端部署
 ```
-docker pull lloydzhou/ab
+docker pull lloydzhou/ab:kvrocks
 
-docker run --rm -it -e INTERVAL=60 -e HTPASSWD='abadmin:$apr1$EJ2gyYP1$JirougEJ3sK/nF8aj63Zw1' -v `pwd`/data:/data:rw -p 8011:80 lloydzhou/ab
+docker run --rm -it -e INTERVAL=60 -e HTPASSWD='abadmin:$apr1$EJ2gyYP1$JirougEJ3sK/nF8aj63Zw1' -v `pwd`/data:/data:rw -p 8011:80 lloydzhou/ab:kvrocks
 
-docker run --rm -it -e INTERVAL=60 -e HTPASSWD="$(docker run --rm -it xmartlabs/htpasswd abadmin abpasswd )" -v `pwd`/data:/data/:rw -p 8011:80  lloydzhou/ab
+docker run --rm -it -e INTERVAL=60 -e HTPASSWD="$(docker run --rm -it xmartlabs/htpasswd abadmin abpasswd )" -v `pwd`/data:/data/:rw -p 8011:80  lloydzhou/ab:kvrocks
 ```
 
 ## client
