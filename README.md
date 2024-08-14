@@ -24,6 +24,10 @@ docker run --rm -it -e INTERVAL=60 -e HTPASSWD='abadmin:$apr1$EJ2gyYP1$JirougEJ3
 docker run --rm -it -e INTERVAL=60 -e HTPASSWD="$(docker run --rm -it xmartlabs/htpasswd abadmin abpasswd )" -v `pwd`/data:/data/:rw -p 8011:80  lloydzhou/ab:kvrocks
 ```
 
+
+## sdk
+https://github.com/lloydzhou/redisab/blob/master/ab.src.js
+
 ## client
 ```
 // 获取AB测试的变量值
