@@ -1,10 +1,9 @@
 version: '2'
 services:
   ab:
-    image: hawkeye:ab
+    image: lloydzhou/ab:kvrocks
     volumes:
       - ./data:/data
-      - ./dist:/var/www/html
       - ./htpasswd:/etc/nginx/htpasswd
     environment:
       - INTERVAL=60
