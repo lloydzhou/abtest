@@ -278,6 +278,7 @@ r:options('/ab/var', function(params)
 end)
 
 r:get('/ab/var', function(params)
+  local existed_map = init_map()
   local user_id = get_user_id()
   local var_name = arg('name')
   local hash = murmurhash2(var_name .. ":" .. user_id)
@@ -322,6 +323,8 @@ r:get('/ab/var', function(params)
   if value == ngx.null then
       -- 找不到已经进入实验的记录，先判断属性，再计算流量
       local status, c = pcall(condition.new, conditionstr)
+--       ngx.log(ngx.ERR, "status", status, user_id, c)
+
       if status == false then
           -- status == false代表解析失败
           close_redis(red)
@@ -345,7 +348,7 @@ r:get('/ab/var', function(params)
           end
           -- 解析成功的时候，如果验证是false也直接返回
           local status, valid = pcall(condition.valid, c, user_info)
-          -- ngx.log(ngx.ERR, "status", status, "valid", valid, user_id, c, cjson.encode(user_info))
+--           ngx.log(ngx.ERR, "status", status, "valid", valid, user_id, c, cjson.encode(user_info))
           if status == false or valid == false then
               close_redis(red)
               return response(200, 0, "success", {
@@ -421,6 +424,25 @@ r:get('/ab/var', function(params)
       value = default
   end
 
+  -- 获取 hash 中的 key 值
+  local res, err = red:hmget("version:map:" .. value, "url", "location")
+  if not res then
+    ngx.log(ngx.ERR, "Failed to fetch hash for key '" .. value .. "': ", err)
+    local url = ""
+    local location = ""
+  else
+    local url = res[1]
+    local location = res[2]
+    if not url then
+      ngx.log(ngx.ERR, "Value error")
+      url = ""
+    end
+    if not location then
+      ngx.log(ngx.ERR, "Value error")
+      location = ""
+    end
+  end
+
   local version = var_name .. ":" .. value
   -- 1. 在实验级别增加当天的日期；
   -- 2. 在实验的hashset上以版本为key自增pv和uv
@@ -432,7 +454,7 @@ r:get('/ab/var', function(params)
 
   close_redis(red)
   return response(200, 0, "success", {
-      type=typ, test=test, layer=layer, value=value, hash=hash,
+      type=typ, test=test, layer=layer, value=value, hash=hash, url=url, location=location
   })
 end)
 

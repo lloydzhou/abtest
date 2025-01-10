@@ -197,16 +197,21 @@ const TestWeightFrom = ({ editTest, dispatch, testWeight={} }) => {
         }
       }}
     >
-      {weights.map(({value, name, weight}) => {
-        return <Slider style={{marginBottom: 50}} key={value} defaultValue={weight} onChange={(e) => {
+      {weights.map(({value, name, weight}) => (
+        <div key={value} style={{ marginBottom: 24 }}>
+          <div style={{ marginBottom: 8 }}>
+            <strong>{`${name} (${value})`}</strong>
+          </div>
+          <Slider defaultValue={weight} onChange={(e) => {
           // console.log(e, value, weight, total)
           editTest[value] = e
           dispatch({ type: 'save', payload: {editTest: {...editTest}}})
           // return false
-        }} tooltipVisible tipFormatter={(v) => `${name}(${value}): ${v}`} />
-      })}
+          }} tooltipVisible={false} />
+        </div>
+      ))}
     </Modal>
-  )
+  );
 }
 
 const NewTargetFrom = Form.create()(({ newTargetVarName, dispatch, form }) => {
@@ -348,18 +353,30 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
       dataIndex: 'version',
       key: 'version',
       render(version, row) {
-        return `${version}(${row.weight}%)`
-      }
+        return (
+          <div
+            style={{
+              wordWrap: 'break-word',
+              wordBreak: 'break-word',
+            }}
+          >
+            {`${version}(${row.weight}%)`}
+          </div>
+        );
+      },
+      width: 250, // 设置列的最大宽度，内容较长时会换行
     },
     {
       title: '实验PV',
       dataIndex: 'pv',
       key: 'pv',
+      width: 100,
     },
     {
       title: '实验UV',
       dataIndex: 'uv',
       key: 'uv',
+      width: 100,
     },
   ]
   for (const target of rateTargets) {
@@ -426,13 +443,14 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
     }
     return res
   }).sort((a,b) => a.value === showTestRate.default_value ? -1 : 1)
-  const width = 300 + rateTargets.length * 200
+//  const width = 300 + rateTargets.length * 200
+  const width = Math.max(600, 450 + rateTargets.length * 200);
   return (
     <Modal
       title={`${showTestRate ? showTestRate.name : '-'}转化率`}
       visible={!!showTestRate}
       key={showTestRate && showTestRate.name || 'TestRateInfo'}
-      width={width}
+      width={Math.min(width, 1200)}
       onCancel={e => {
         dispatch({ type: 'common/save', payload: {showTestRate: false } })
       }}
@@ -440,7 +458,7 @@ const TestRateInfo = ({ showTestRate, rateTargets, rateVersions, dispatch }) => 
         dispatch({ type: 'common/save', payload: {showTestRate: false } })
       }}>关闭</Button>}
     >
-      <Table dataSource={dataSource} rowKey={row => row.version} columns={columns} pagination={false} />
+      <Table dataSource={dataSource} rowKey={row => row.version} columns={columns} pagination={false} scroll={{ x: 'max-content' }} />
     </Modal>
   )
 }

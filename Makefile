@@ -8,7 +8,7 @@ TAG?=hawkeye:ab
 INTERVAL?=60
 
 build:
-	docker build --build-arg BASE=$(BASE) -t $(TAG) -f docker/Dockerfile .
+	sudo docker buildx build --platform=linux/amd64 --build-arg BASE=$(BASE) -t $(TAG) -f docker/Dockerfile . --load
 
 dist/index.js:
 	yarn run build

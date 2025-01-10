@@ -215,16 +215,18 @@ local scripts = {
     repeat
         result = redis.call("hscan", key, cursor, "count", 50)
         cursor, data = unpack(result)
-        args = {"hmset", backup_key}
-        for i=1, #data, 2 do
+        if #data ~= 0 then
+          args = {"hmset", backup_key}
+          for i=1, #data, 2 do
             table.insert(args, data[i])
             table.insert(args, data[i + 1])
+          end
+          redis.call(unpack(args))
         end
-        redis.call(unpack(args))
     until cursor == "0"
 
     local res = redis.call("del", key)
-    if res ~= 0 then
+    if res ~= 0 and res ~= 1 then
         return {-1, "remove user value failed"}
     end
 
@@ -489,4 +491,102 @@ get_user_id = function()
   end
   return response(400, -1, 'can not get user_id')
 end
+init_map = function()
+    -- 从文件中读取 key 和 {url, location} 的 map
+    local function load_map_from_file(file_path)
+        local map = {}
+        local file, err = io.open(file_path, "r")
+        if not file then
+            ngx.log(ngx.ERR, "Failed to open file: ", err)
+            return nil, err
+        end
 
+        for line in file:lines() do
+            local key, url, location = line:match("^(.-)=(.-),(.-)$")
+            if key and url and location then
+                map[key] = { url = url, location = location }
+            else
+                ngx.log(ngx.WARN, "Ignoring malformed line: ", line)
+            end
+        end
+
+        file:close()
+        return map
+    end
+
+    -- 将 map 写入 Redis
+    local function store_map_to_redis_hash(map)
+        local red = connect_redis()
+
+        -- 遍历 map，将每个 key 的 url 和 location 写入 Redis Hash
+        for key, value in pairs(map) do
+            if value.url and value.location then
+                local res, err = red:hmset("version:map:" .. key, "url", value.url, "location", value.location)
+                if not res then
+                    ngx.log(ngx.ERR, "Failed to write hash for key '" .. key .. "': ", err)
+                    return false, err
+                end
+            else
+                ngx.log(ngx.WARN, "Skipping incomplete entry for key '" .. key .. "'")
+            end
+        end
+
+        -- 写入默认版本的key，用于后续判断是否完成初始化
+        local res1, err1 = red:hmset("version:map:default", "url", "default", "location", "default")
+        if not res1 then
+            ngx.log(ngx.ERR, "Failed to write hash for key 'default': ", err1)
+            return false, err1
+        end
+
+        ngx.log(ngx.INFO, "Successfully stored map in Redis hash")
+
+        return true
+    end
+
+    -- 检查指定 key 是否已写入 Redis hash
+    local function verify_in_redis_hash()
+        local red = connect_redis()
+
+        -- 获取 hash 中的 key 值
+        local res, err = red:hmget("version:map:default", "url", "location")
+        if not res then
+            ngx.log(ngx.ERR, "Failed to fetch hash for key 'default': ", err)
+            return false, "Fetch error: " .. err
+        else
+            local url = res[1]
+            local location = res[2]
+            if url == "default" and location == "default" then
+                return true, nil
+            else
+                return false, "Value error"
+            end
+        end
+
+        return true, nil
+    end
+
+    -- 主逻辑
+    local file_path = "/usr/local/openresty/nginx/map.txt"
+
+    -- 验证是否已初始化
+    local ok, err = verify_in_redis_hash()
+    if ok then
+        ngx.log(ngx.INFO, "Verification succeeded")
+        return
+    end
+
+    -- 加载文件
+    local map, err = load_map_from_file(file_path)
+    if not map then
+        ngx.log(ngx.ERR, "Failed to load map from file: ", err)
+        return
+    end
+
+    -- 存储到 Redis Hash
+    local ok, err = store_map_to_redis_hash(map)
+    if not ok then
+        ngx.log(ngx.ERR, "Failed to store map to Redis hash: ", err)
+    else
+        ngx.log(ngx.INFO, "Map successfully stored to Redis hash")
+    end
+end

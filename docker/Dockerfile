@@ -2,11 +2,11 @@
 ARG BASE=apache/kvrocks:nightly-20240602-309ea7b
 
 # 生成一个默认的htpasswd
-FROM xmartlabs/htpasswd as htpasswd
+FROM --platform=linux/amd64 xmartlabs/htpasswd as htpasswd
 RUN htpasswd -nb abadmin abpasswd > /tmp/htpasswd
 
 # 利用openresty里面的luajit编译两个lua脚本
-FROM openresty/openresty:alpine-apk as openresty
+FROM --platform=linux/amd64 openresty/openresty:alpine-apk as openresty
 COPY lua /lua
 COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
 RUN cd /usr/local/openresty/nginx/ \
@@ -18,7 +18,7 @@ RUN cd /usr/local/openresty/nginx/ \
 
 
 # 打包前端代码
-FROM node:16.0.0-alpine3.13 as node
+FROM --platform=linux/amd64 node:16.0.0-alpine3.13 as node
 
 ADD ./package.json /app/
 ADD ./yarn.lock /app/
@@ -31,10 +31,10 @@ ADD ./.webpackrc /app/
 RUN cd /app && yarn config set strict-ssl false && yarn install && yarn run build && ls -alh dist
 
 # 多阶段打包
-FROM ${BASE}
+FROM --platform=linux/amd64 ${BASE}
 
 COPY --from=htpasswd /tmp/htpasswd /etc/nginx/htpasswd
-COPY --from=openresty/openresty:alpine-apk /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1
+COPY --from=openresty /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1
 
 ENV PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin
 
