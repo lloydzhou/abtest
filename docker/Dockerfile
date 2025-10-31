@@ -41,7 +41,7 @@ ENV PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/
 ENV HTPASSWD=
 ENV INTERVAL=60
 
-ADD ./docker-entrypoint.sh /usr/local/bin/
+ADD ./docker/docker-entrypoint.sh /usr/local/bin/
 
 COPY --from=node /app/dist /var/www/html
 
