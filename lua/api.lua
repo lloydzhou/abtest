@@ -358,7 +358,13 @@ r:get('/ab/var', function(params)
           ngx.log(ngx.ERR, "status", status, "valid", valid, user_id, c, cjson.encode(user_info))
       end
 
-      local hash_weight, start_weight = (tonumber(hash) % 10000), 0
+      -- [推荐改进] 使用浮点数映射取代取模，消除 Modulo Bias
+      -- 1. 将 32 位 hash 值映射到 [0, 1) 区间的浮点数
+      local hash_float = (tonumber(hash) / 4294967295.0)
+      -- 2. 将浮点数映射到 [0, 10000) 的整数空间
+      local hash_weight = math.floor(hash_float * 10000)
+
+      local start_weight = 0
       local layer_weights, err = red:sort(
           "layer:" .. layer,
           "by", "var:*->created",
@@ -380,8 +386,9 @@ r:get('/ab/var', function(params)
               end
           end
       end
-      -- 之前只考虑了半开半闭的区间，但是忽略了为0这个点
-      if (start_weight < hash_weight and hash_weight <= start_weight + layer_weight * 100) or (0 == start_weight and 0 == hash_weight) then
+      -- [修正] 1. 统一使用左闭右开区间 [start, end)，不再需要对 0 进行特殊处理。
+      local end_weight = start_weight + layer_weight * 100
+      if hash_weight >= start_weight and hash_weight < end_weight then
           local weights, err = red:sort(
               "value:" .. var_name,
               "by", "version:" .. var_name .. ":*->created",
@@ -392,19 +399,25 @@ r:get('/ab/var', function(params)
             close_redis(red)
             return response(500, -1, "get weights failed: " .. var_name)
           end
-          local real_weight = start_weight
+
+          -- [修正] 2. 隔离两层随机分配。将 hash_weight 映射到实验自身的流量区间 [0, layer_weight * 100) 内。
+          local version_hash_weight = hash_weight - start_weight
+          local version_start_weight = 0
+
           for i, v in ipairs(weights) do
               if i % 2 == 1 then
                   val = v
               else
                   weight = tonumber(v)
                   if weight > 0 then
-                      real_weight = real_weight + weight * layer_weight
-                      if hash_weight <= real_weight then
+                      -- [修正] 3. 版本区间的计算与 layer_weight 和 start_weight 完全解耦。
+                      local version_end_weight = version_start_weight + weight * layer_weight
+                      if version_hash_weight >= version_start_weight and version_hash_weight < version_end_weight then
                           value = val
                           red:hset("user:value:" .. var_name, user_id, value)
                           break
                       end
+                      version_start_weight = version_end_weight
                   end
               end
           end
