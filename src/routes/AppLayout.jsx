@@ -5,16 +5,19 @@
  * 视觉风格：Indigo（紫蓝）主题，分组式侧边栏，悬浮状态圆点
  */
 import React, { useState, useMemo } from 'react';
-import { Layout, Menu, Breadcrumb, Button, Space, Tooltip, theme, message } from 'antd';
+import { Layout, Menu, Breadcrumb, Button, Space, Tooltip, Dropdown, Avatar, theme, message } from 'antd';
 import {
   ExperimentOutlined,
   BlockOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ReloadOutlined,
+  LogoutOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
+import { removeAuth, getUsername } from '../utils/auth';
 import { getStatusConfig } from '../constants';
 
 const { Sider, Header, Content } = Layout;
@@ -227,6 +230,28 @@ export default function AppLayout() {
                 onClick={handleRefresh}
               />
             </Tooltip>
+            <Dropdown trigger={['click']} menu={{
+              items: [
+                {
+                  key: 'logout',
+                  icon: <LogoutOutlined />,
+                  label: '退出登录',
+                  onClick: () => {
+                    removeAuth();
+                    window.location.reload();
+                  },
+                },
+              ],
+            }} placement="bottomRight">
+              <Space style={{ cursor: 'pointer' }}>
+                <Avatar size="small" style={{ background: '#6366f1', fontSize: 13 }}>
+                  {(getUsername() || '?').slice(0, 2).toUpperCase()}
+                </Avatar>
+                <span style={{ fontSize: 13, color: token.colorTextSecondary }}>
+                  {getUsername()}
+                </span>
+              </Space>
+            </Dropdown>
           </Space>
         </Header>
 

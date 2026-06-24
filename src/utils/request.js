@@ -1,12 +1,19 @@
 /**
- * HTTP 请求工具（精简版，移除了环境切换逻辑）
+ * HTTP 请求工具
+ * 自动携带 Basic Auth 凭证，401 时跳转登录
  */
+import { getAuth, removeAuth } from './auth';
 
 function parseJSON(response) {
   return response.json();
 }
 
 function checkStatus(response) {
+  if (response.status === 401) {
+    removeAuth();
+    window.location.href = '/login';
+    throw new Error('登录已过期，请重新登录');
+  }
   if (response.status >= 200 && response.status < 300) {
     return response;
   }
@@ -20,6 +27,15 @@ export default function request(url, options = {}) {
     ...(options || {}),
     credentials: options.credentials || 'include',
   };
+
+  // 自动带上 Authorization header
+  const token = getAuth();
+  if (token) {
+    newOptions.headers = {
+      ...(newOptions.headers || {}),
+      Authorization: `Basic ${token}`,
+    };
+  }
 
   if (typeof newOptions.body === 'object') {
     newOptions.body = JSON.stringify(newOptions.body);
