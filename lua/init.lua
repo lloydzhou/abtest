@@ -220,7 +220,9 @@ local scripts = {
             table.insert(args, data[i])
             table.insert(args, data[i + 1])
         end
-        redis.call(unpack(args))
+        if #args > 2 then
+            redis.call(unpack(args))
+        end
     until cursor == "0"
 
     local res = redis.call("del", key)
@@ -254,7 +256,12 @@ local scripts = {
     end
     table.insert(args, "desc")
 
-    local traffic = redis.call(unpack(args))
+    -- days:var_name 可能不存在，Kvrocks sort 对不存在的键返回 WRONGTYPE
+    local days_exists = redis.call("exists", "days:" .. var_name)
+    local traffic = {}
+    if days_exists == 1 then
+        traffic = redis.call(unpack(args))
+    end
 
     return {values, targets, traffic}
   ]],
@@ -441,6 +448,15 @@ close_redis = function(red)
   if not ok then
     response(500, 1, 'failed to set keepalive: ' .. err)
   end
+end
+-- Kvrocks 的 sort 对不存在的键返回 WRONGTYPE（Redis 返回空数组）
+-- 此函数统一处理：键不存在时返回空数组
+safe_sort = function(red, key, ...)
+  local key_type, terr = red:type(key)
+  if terr or not key_type or key_type == ngx.null or key_type == "none" then
+    return {}, nil
+  end
+  return red:sort(key, ...)
 end
 arg = function(name, default)
   local var = ngx.var['arg_' .. name]
