@@ -2,11 +2,11 @@
 ARG BASE=apache/kvrocks:nightly-20240602-309ea7b
 
 # 生成一个默认的htpasswd
-FROM xmartlabs/htpasswd as htpasswd
+FROM xmartlabs/htpasswd AS htpasswd
 RUN htpasswd -nb abadmin abpasswd > /tmp/htpasswd
 
 # 利用openresty里面的luajit编译两个lua脚本
-FROM openresty/openresty:alpine-apk as openresty
+FROM openresty/openresty:alpine-apk AS openresty
 COPY lua /lua
 COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
 RUN cd /usr/local/openresty/nginx/ \
@@ -17,18 +17,24 @@ RUN cd /usr/local/openresty/nginx/ \
   && luajit -bg /lua/api.lua ./api.ljbc
 
 
-# 打包前端代码
-FROM node:16.0.0-alpine3.13 as node
+# 打包前端代码（Vite + pnpm）
+FROM node:20-alpine3.20 AS node
 
-ADD ./package.json /app/
-ADD ./yarn.lock /app/
-ADD ./src /app/src
-ADD ./public /app/public
-ADD ./sw-precache-config.js /app/
-ADD ./.eslintrc /app/
-ADD ./.webpackrc /app/
+WORKDIR /app
 
-RUN cd /app && yarn config set strict-ssl false && yarn install && yarn run build && ls -alh dist
+# 启用 corepack，锁定与 lockfile 版本匹配的 pnpm 9.x
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+# 先复制依赖清单，最大化利用 docker 层缓存
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# 复制源码与构建配置
+COPY vite.config.js index.html ./
+COPY src ./src
+COPY public ./public
+
+RUN pnpm run build && ls -alh dist
 
 # 多阶段打包
 FROM ${BASE}
