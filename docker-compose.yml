@@ -5,6 +5,8 @@ services:
     volumes:
       - ./data:/data
       - ./htpasswd:/etc/nginx/htpasswd
+      - ./lua:/lua
+      - ./docker/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
     environment:
       - INTERVAL=60
     ports:

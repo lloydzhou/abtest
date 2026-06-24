@@ -34,7 +34,7 @@ end)
 r:get('/ab/tests', function(params)
   local red = connect_redis()
   -- sort vars by nosort get # get *->name get *->layer get *->type get *->status get *->default
-  local res, err = red:sort(
+  local res, err = safe_sort(red,
     "vars", 'by', 'var:*->modified',
     'get', '#', 'get', 'var:*->name',
     'get', 'var:*->layer', 'get', 'var:*->type', 'get', 'var:*->status',
@@ -45,7 +45,7 @@ r:get('/ab/tests', function(params)
   )
   if err then
     close_redis(red)
-    return response(500, 1, 'get test failed')
+    return response(500, 1, 'get test failed: ' .. tostring(err))
   end
   close_redis(red)
   response(200, 0, "success", {tests=res})
@@ -86,7 +86,7 @@ r:post('/ab/test/add', function(params)
   local test_name = arg('test_name')
   local type = arg('type')
   local default = arg('default')
-  local condition = params.condition
+  local condition = arg('condition', '')
 
   evalscript('add-test', 0, layer_name, layer_weight, var_name, test_name, type, default, condition)
 end)
@@ -108,12 +108,20 @@ r:get('/ab/test/traffic', function(params)
   local red = connect_redis()
   local sha = get_sha_by_script_name('traffic')
   local res, err = red:evalsha(sha, 0, var_name)
+  if err then
+    close_redis(red)
+    return response(500, 1, 'get traffic failed: ' .. err)
+  end
+  if type(res) ~= 'table' then
+    close_redis(red)
+    return response(500, 1, 'get traffic failed')
+  end
   local values, targets, traffic, args = unpack(res)
   close_redis(red)
   response(200, 0, "success", {
-    values=values,
-    targets=targets,
-    traffic=traffic,
+    values=values or {},
+    targets=targets or {},
+    traffic=traffic or {},
     args=args,
   })
 end)
@@ -123,17 +131,25 @@ r:get('/ab/test/rate', function(params)
   local red = connect_redis()
   local sha = get_sha_by_script_name('rate')
   local res, err = red:evalsha(sha, 0, var_name)
+  if err then
+    close_redis(red)
+    return response(500, 1, 'get rate failed: ' .. err)
+  end
+  if type(res) ~= 'table' then
+    close_redis(red)
+    return response(500, 1, 'get rate failed')
+  end
   local versions, targets, args = unpack(res)
   close_redis(red)
   response(200, 0, "success", {
-    versions=versions,
-    targets=targets,
+    versions=versions or {},
+    targets=targets or {},
   })
 end)
 
 r:get('/ab/versions', function(params)
   local red = connect_redis()
-  local res, err = red:sort(
+  local res, err = safe_sort(red,
     'versions', 'by', 'nosort',
     'get', '#', 'get', 'version:*->var_name', 'get', 'version:*->name',
     'get', 'version:*->value', 'get', 'version:*->weight',
@@ -142,7 +158,7 @@ r:get('/ab/versions', function(params)
   )
   if err then
     close_redis(red)
-    return response(500, 1, 'get target failed')
+    return response(500, 1, 'get target failed: ' .. tostring(err))
   end
   close_redis(red)
   response(200, 0, "success", {
@@ -154,14 +170,14 @@ r:get('/ab/users', function(params)
   local attr_name = params.attr_name
   local page = tonumber(params.page or 1)
   local red = connect_redis()
-  local res, err = red:sort(
+  local res, err = safe_sort(red,
     'user_attr:' .. attr_name, 'by', 'user_attr:*->created',
     'get', '#', 'get', 'user_attr:*->name',
     'get', 'user_attr:*->modified'
   )
   if err then
     close_redis(red)
-    return response(500, 1, 'get users failed')
+    return response(500, 1, 'get users failed: ' .. tostring(err))
   end
   close_redis(red)
   response(200, 0, "success", {
@@ -219,7 +235,7 @@ end)
 
 r:get('/ab/attrs', function(params)
   local red = connect_redis()
-  local res, err = red:sort(
+  local res, err = safe_sort(red,
     'user_attr_set', 'by', 'user_attr_name:*->created',
     'get', '#', 'get', 'user_attr_name:*->name',
     'get', 'user_attr_name:*->type',
@@ -228,7 +244,7 @@ r:get('/ab/attrs', function(params)
   )
   if err then
     close_redis(red)
-    return response(500, 1, 'get attributes failed')
+    return response(500, 1, 'get attributes failed: ' .. tostring(err))
   end
   close_redis(red)
   response(200, 0, "success", {
@@ -250,14 +266,14 @@ end)
 
 r:get('/ab/targets', function(params)
   local red = connect_redis()
-  local res, err = red:sort(
+  local res, err = safe_sort(red,
     'targets', 'by', 'nosort',
     'get', '#', 'get', 'target:*->var_name',
     'get', 'target:*->count', 'get', 'target:*->rate'
   )
   if err then
     close_redis(red)
-    return response(500, 1, 'get target failed')
+    return response(500, 1, 'get target failed: ' .. tostring(err))
   end
   close_redis(red)
   response(200, 0, "success", {
@@ -365,7 +381,7 @@ r:get('/ab/var', function(params)
       local hash_weight = math.floor(hash_float * 10000)
 
       local start_weight = 0
-      local layer_weights, err = red:sort(
+      local layer_weights, err = safe_sort(red,
           "layer:" .. layer,
           "by", "var:*->created",
           "get", "#", "get", "var:*->weight"
@@ -389,7 +405,7 @@ r:get('/ab/var', function(params)
       -- [修正] 1. 统一使用左闭右开区间 [start, end)，不再需要对 0 进行特殊处理。
       local end_weight = start_weight + layer_weight * 100
       if hash_weight >= start_weight and hash_weight < end_weight then
-          local weights, err = red:sort(
+          local weights, err = safe_sort(red,
               "value:" .. var_name,
               "by", "version:" .. var_name .. ":*->created",
               "get", "#", "get", "version:" .. var_name .. ":*->weight"

@@ -14,8 +14,14 @@ function aggregate(red, key)
   -- S(n) = S(n-1) + (x(n) - E(n-1))(x(n) - E(n-))
 
   repeat
-    result = red:zscan(key, cursor, "count", 100)
+    local result_err
+    result, result_err = red:zscan(key, cursor, "count", 100)
+    if result_err or type(result) ~= "table" then
+      ngx.log(ngx.ERR, "scan aggregate failed: ", key, ", ", result_err or tostring(result))
+      return nil
+    end
     cursor, data = unpack(result)
+    data = data or {}
 
     for i=1, #data, 2 do
       local score = tonumber(data[i + 1])
@@ -35,7 +41,11 @@ function aggregate(red, key)
     end
   until cursor == "0"
 
-  std = math.sqrt(s / (count - 1))
+  if count <= 1 then
+    std = 0
+  else
+    std = math.sqrt(s / (count - 1))
+  end
 
   return {
     tostring(count), tostring(sum),
@@ -52,8 +62,16 @@ function calc(penv)
     ngx.log(ngx.ERR, 'can not connect redis', err)
   end
   red:select(penv == 'production' and 1 or 0) -- 测试环境实验db0,正式环境实验db1
-  local versions = red:sort("versions", "by", "*", "get", "#", "get", "version:*->var_name")
-  local targets = red:sort("targets", "by", "*", "get", "#", "get", "target:*->var_name")
+  local versions, versions_err = red:sort("versions", "by", "*", "get", "#", "get", "version:*->var_name")
+  if versions_err or type(versions) ~= "table" then
+    ngx.log(ngx.ERR, penv .. ", get versions failed: ", versions_err or tostring(versions))
+    return
+  end
+  local targets, targets_err = red:sort("targets", "by", "*", "get", "#", "get", "target:*->var_name")
+  if targets_err or type(targets) ~= "table" then
+    ngx.log(ngx.ERR, penv .. ", get targets failed: ", targets_err or tostring(targets))
+    return
+  end
   for i, version in ipairs(versions) do
     if i % 2 == 1 then
       local version_var_name = versions[i + 1]
