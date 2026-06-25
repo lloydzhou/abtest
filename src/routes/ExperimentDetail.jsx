@@ -191,6 +191,7 @@ export default function ExperimentDetail() {
                 tw={tw}
                 trafficData={trafficData}
                 trafficLoading={trafficLoading}
+                onRetryTraffic={fetchTraffic}
               />
             ),
           },
@@ -202,6 +203,7 @@ export default function ExperimentDetail() {
                 rateData={rateData}
                 rateLoading={rateLoading}
                 defaultValue={test.default_value}
+                onRetry={fetchRate}
               />
             ),
           },
@@ -270,7 +272,7 @@ function KPICard({ label, value, suffix, hint, tone }) {
 /* ============================================================
  * Tab 1: 概览 —— 版本卡片 + 流量趋势图
  * ============================================================ */
-function OverviewTab({ test, versions, tw, trafficData, trafficLoading }) {
+function OverviewTab({ test, versions, tw, trafficData, trafficLoading, onRetryTraffic }) {
   return (
     <div>
       <div className="version-cards">
@@ -306,7 +308,7 @@ function OverviewTab({ test, versions, tw, trafficData, trafficLoading }) {
           {trafficLoading ? (
             <Skeleton active paragraph={{ rows: 6 }} />
           ) : trafficData?.error ? (
-            <Alert type="error" showIcon message={trafficData.error} />
+            <Alert type="error" showIcon message={trafficData.error} action={onRetryTraffic && <Button size="small" onClick={onRetryTraffic}>重试</Button>} />
           ) : !trafficData || !trafficData.values || trafficData.values.length === 0 ? (
             <EmptyState icon="📈" title="暂无流量数据" description="实验运行后会自动统计流量数据" />
           ) : (
@@ -353,10 +355,17 @@ function TrafficChart({ trafficData, versions }) {
 /* ============================================================
  * Tab 2: 转化率 —— 版本对比表（带显著性标识）
  * ============================================================ */
-function RateTab({ rateData, rateLoading, defaultValue }) {
+function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
   if (rateLoading) return <Skeleton active paragraph={{ rows: 4 }} />;
   if (!rateData) return <EmptyState icon="📊" title="点击此 Tab 加载转化率数据" />;
-  if (rateData.error) return <Alert type="error" showIcon message={rateData.error} />;
+  if (rateData.error) return (
+    <Alert
+      type="error"
+      showIcon
+      message={rateData.error}
+      action={onRetry && <Button size="small" onClick={onRetry}>重试</Button>}
+    />
+  );
 
   const { targets = [], versions: rawVersions = [] } = rateData;
   const rows = parseRateData(rawVersions, targets, defaultValue);
