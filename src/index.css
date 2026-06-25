@@ -747,4 +747,13 @@ ul, ol {
   .ant-modal {
     max-width: calc(100vw - 24px) !important;
   }
+
+  .layer-header-bar,
+  .layer-header .ant-progress {
+    display: none !important;
+  }
+
+  .detail-meta-line {
+    gap: 8px;
+  }
 }

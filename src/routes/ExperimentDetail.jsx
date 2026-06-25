@@ -348,6 +348,18 @@ function TrafficChart({ trafficData, versions }) {
       yAxis={{ label: { formatter: (v) => v } }}
       tooltip={{ showCrosshairs: true }}
       color={['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#4f46e5']}
+      theme={{
+        styleSheet: {
+          brandColor: '#6366f1',
+          paletteQualitative10: ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#4f46e5'],
+          backgroundColor: 'transparent',
+        },
+      }}
+      axis={{
+        x: { line: { stroke: '#e2e8f0' }, label: { fill: '#94a3b8' } },
+        y: { line: { stroke: '#e2e8f0' }, label: { fill: '#94a3b8' }, grid: { line: { stroke: '#f1f5f9' } } },
+      }}
+      legend={{ position: 'top', marker: { symbol: 'smooth' } }}
     />
   );
 }
