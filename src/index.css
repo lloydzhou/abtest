@@ -283,6 +283,11 @@ ul, ol {
   transform: translateY(-2px);
 }
 
+.exp-card:active {
+  transform: scale(0.985);
+  transition: transform 0.08s ease;
+}
+
 .exp-card:hover::before {
   opacity: 1;
 }
@@ -741,5 +746,14 @@ ul, ol {
 
   .ant-modal {
     max-width: calc(100vw - 24px) !important;
+  }
+
+  .layer-header-bar,
+  .layer-header .ant-progress {
+    display: none !important;
+  }
+
+  .detail-meta-line {
+    gap: 8px;
   }
 }
