@@ -1,9 +1,10 @@
 /**
- * 编辑层流量弹窗
+ * 编辑层流量弹窗 —— 使用 TrafficAllocator 组件
  */
 import React, { useState, useEffect } from 'react';
-import { Modal, Slider, message } from 'antd';
+import { Modal, message } from 'antd';
 import { useApp } from '../store/AppContext';
+import TrafficAllocator from './TrafficAllocator';
 
 export default function EditLayerWeightModal({ open, layer, onClose }) {
   const { layerWeight, editLayerWeight } = useApp();
@@ -20,6 +21,12 @@ export default function EditLayerWeightModal({ open, layer, onClose }) {
       setWeights(init);
     }
   }, [open, layer]); // eslint-disable-line
+
+  const allocatorItems = lw.weight.map(({ var_name, name, weight }) => ({
+    key: var_name,
+    label: `${name}(${var_name})`,
+    weight: weights[var_name] ?? weight,
+  }));
 
   const handleOk = async () => {
     const total = Object.values(weights).reduce((s, i) => s + i, 0);
@@ -44,25 +51,17 @@ export default function EditLayerWeightModal({ open, layer, onClose }) {
     <Modal
       title={`编辑 ${layer} 流量`}
       open={open}
-      width={600}
+      width={640}
       onCancel={onClose}
       onOk={handleOk}
       destroyOnHidden
     >
-      {lw.weight.map(({ var_name, name, weight }) => (
-        <div key={var_name} style={{ marginBottom: 40 }}>
-          <div style={{ marginBottom: 8, color: '#667085', fontSize: 13 }}>
-            {name}({var_name})：{weights[var_name] ?? weight}%
-          </div>
-          <Slider
-            min={0}
-            max={100}
-            defaultValue={weight}
-            onChange={(v) => setWeights((prev) => ({ ...prev, [var_name]: v }))}
-            tooltip={{ open: true, formatter: (v) => `${v}%`, getPopupContainer: (n) => n.parentElement }}
-          />
-        </div>
-      ))}
+      {allocatorItems.length > 0 && (
+        <TrafficAllocator
+          items={allocatorItems}
+          onChange={(newWeights) => setWeights(newWeights)}
+        />
+      )}
     </Modal>
   );
 }
