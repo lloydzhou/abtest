@@ -10,7 +10,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Button, Tabs, Tag, Table, Progress, Space, Empty, Spin, Alert,
+  Button, Tabs, Tag, Table, Progress, Space, Alert, Skeleton,
   Tooltip, Card, Modal, message,
 } from 'antd';
 import {
@@ -26,6 +26,7 @@ import { getStatusConfig, getSignificance } from '../constants';
 import EditWeightModal from '../components/EditWeightModal';
 import NewVersionModal from '../components/NewVersionModal';
 import NewTargetModal from '../components/NewTargetModal';
+import EmptyState from '../components/EmptyState';
 
 // 紧凑数字格式：1234 → 1.2k，1234567 → 1.2M
 function formatCompact(n) {
@@ -104,7 +105,7 @@ export default function ExperimentDetail() {
   if (!test) {
     return (
       <div className="page-container">
-        <Empty description="实验不存在" />
+        <EmptyState icon="🔍" title="实验不存在" />
       </div>
     );
   }
@@ -274,7 +275,7 @@ function OverviewTab({ test, versions, tw, trafficData, trafficLoading }) {
     <div>
       <div className="version-cards">
         {versions.length === 0 ? (
-          <Empty description="暂无版本" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <EmptyState icon="📦" title="暂无版本" description="点击右上角“新增版本”开始配置" />
         ) : (
           versions.map((v) => {
             const w = tw.weight.find((w) => w.value === v.value);
@@ -301,15 +302,17 @@ function OverviewTab({ test, versions, tw, trafficData, trafficLoading }) {
       </div>
 
       <Card title="流量趋势" size="small" style={{ marginTop: 16, borderRadius: 'var(--radius-lg)' }}>
-        <Spin spinning={trafficLoading}>
-          {trafficData?.error ? (
+        <div style={{ minHeight: trafficLoading ? 320 : 'auto' }}>
+          {trafficLoading ? (
+            <Skeleton active paragraph={{ rows: 6 }} />
+          ) : trafficData?.error ? (
             <Alert type="error" showIcon message={trafficData.error} />
           ) : !trafficData || !trafficData.values || trafficData.values.length === 0 ? (
-            <Empty description="暂无流量数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            <EmptyState icon="📈" title="暂无流量数据" description="实验运行后会自动统计流量数据" />
           ) : (
             <TrafficChart trafficData={trafficData} versions={versions} />
           )}
-        </Spin>
+        </div>
       </Card>
     </div>
   );
@@ -351,15 +354,15 @@ function TrafficChart({ trafficData, versions }) {
  * Tab 2: 转化率 —— 版本对比表（带显著性标识）
  * ============================================================ */
 function RateTab({ rateData, rateLoading, defaultValue }) {
-  if (rateLoading) return <Spin />;
-  if (!rateData) return <Empty description="点击此 Tab 加载数据" />;
+  if (rateLoading) return <Skeleton active paragraph={{ rows: 4 }} />;
+  if (!rateData) return <EmptyState icon="📊" title="点击此 Tab 加载转化率数据" />;
   if (rateData.error) return <Alert type="error" showIcon message={rateData.error} />;
 
   const { targets = [], versions: rawVersions = [] } = rateData;
   const rows = parseRateData(rawVersions, targets, defaultValue);
 
   if (rows.length === 0) {
-    return <Empty description="暂无转化率数据" />;
+    return <EmptyState icon="📊" title="暂无转化率数据" />;
   }
 
   const defaultRow = rows.find((r) => r.value === defaultValue) || {};

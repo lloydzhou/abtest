@@ -7,7 +7,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Button, Collapse, Progress, Tag, Space, Tooltip, Empty, Spin, Input, Select,
+  Button, Collapse, Progress, Tag, Space, Tooltip, Input, Select,
   Table, Segmented,
 } from 'antd';
 import {
@@ -19,6 +19,8 @@ import { getStatusConfig } from '../constants';
 import NewTestModal from '../components/NewTestModal';
 import EditWeightModal from '../components/EditWeightModal';
 import NewVersionModal from '../components/NewVersionModal';
+import { ExperimentsSkeleton } from '../components/Skeletons';
+import EmptyState from '../components/EmptyState';
 
 // 状态筛选下拉项
 const STATUS_OPTIONS = [
@@ -120,7 +122,7 @@ export default function Experiments() {
         children: (
           <div className="exp-grid">
             {layerTests.length === 0 ? (
-              <Empty description="该层暂无实验" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              <EmptyState icon="🔍" title="该层暂无实验" />
             ) : (
               layerTests.map((test) => (
                 <ExperimentCard
@@ -254,16 +256,20 @@ export default function Experiments() {
 
   return (
     <div className="page-container">
-      <Spin spinning={loading}>
-        {!hasData ? (
-          <div className="empty-state">
-            <Empty description="暂无实验数据">
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => openNewTest()}>
-                创建第一个实验
-              </Button>
-            </Empty>
-          </div>
-        ) : (
+      {loading ? (
+        <ExperimentsSkeleton />
+      ) : !hasData ? (
+        <EmptyState
+          icon={<ExperimentOutlined />}
+          title="暂无实验数据"
+          description="创建你的第一个 A/B 测试实验，开始管理版本流量和追踪转化率"
+          action={
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => openNewTest()}>
+              创建第一个实验
+            </Button>
+          }
+        />
+      ) : (
           <>
             {/* ====== 工具栏 ====== */}
             <div className="toolbar">
@@ -314,9 +320,7 @@ export default function Experiments() {
 
             {/* ====== 主体内容 ====== */}
             {filteredTests.length === 0 ? (
-              <div className="empty-state">
-                <Empty description="没有符合筛选条件的实验" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-              </div>
+              <EmptyState icon="🔍" title="没有符合筛选条件的实验" description="调整搜索关键词或状态筛选" />
             ) : view === 'card' ? (
               <Collapse
                 defaultActiveKey={layers.length > 0 ? [layers[0]] : Object.keys(groupedTests)}
@@ -334,7 +338,7 @@ export default function Experiments() {
             )}
           </>
         )}
-      </Spin>
+      )}
 
       <NewTestModal
         open={showNewTest}

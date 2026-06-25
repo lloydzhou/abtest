@@ -283,6 +283,11 @@ ul, ol {
   transform: translateY(-2px);
 }
 
+.exp-card:active {
+  transform: scale(0.985);
+  transition: transform 0.08s ease;
+}
+
 .exp-card:hover::before {
   opacity: 1;
 }
