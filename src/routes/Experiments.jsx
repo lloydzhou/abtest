@@ -12,7 +12,7 @@ import {
 } from 'antd';
 import {
   PlusOutlined, PieChartOutlined, PlusCircleOutlined, SearchOutlined,
-  AppstoreOutlined, UnorderedListOutlined,
+  AppstoreOutlined, UnorderedListOutlined, ExperimentOutlined,
 } from '@ant-design/icons';
 import { useApp } from '../store/AppContext';
 import { getStatusConfig } from '../constants';
@@ -338,7 +338,6 @@ export default function Experiments() {
             )}
           </>
         )}
-      )}
 
       <NewTestModal
         open={showNewTest}
