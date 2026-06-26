@@ -225,6 +225,8 @@ export default function ExperimentDetail() {
             children: (
               <TargetsTab
                 targets={testTargets}
+                rateData={rateData}
+                defaultValue={test.default_value}
                 onAddTarget={() => setShowNewTarget(true)}
               />
             ),
@@ -601,27 +603,60 @@ function VersionsTab({ versions, tw, onEditWeight, onAddVersion }) {
 /* ============================================================
  * Tab 4: 指标管理
  * ============================================================ */
-function TargetsTab({ targets, onAddTarget }) {
+function TargetsTab({ targets, rateData, defaultValue, onAddTarget }) {
+  // aggregate from rate data
+  const aggMap = React.useMemo(() => {
+    if (!rateData || rateData.error) return {};
+    const { targets: rateTargets = [], versions: rawVersions = [] } = rateData;
+    const rows = parseRateData(rawVersions, rateTargets, defaultValue);
+    const map = {};
+    let totalUV = 0;
+    for (const row of rows) totalUV += row.uv || 0;
+    for (const tName of rateTargets) {
+      let count = 0, user = 0;
+      for (const row of rows) {
+        const t = row.targets[tName];
+        if (t) { count += t.count || 0; user += t.user || 0; }
+      }
+      map[tName] = { count, user, rate: totalUV > 0 ? (user / totalUV) * 100 : 0 };
+    }
+    return map;
+  }, [rateData, defaultValue]);
+
   const columns = [
     {
       title: '指标名称', dataIndex: 'target_name', key: 'target_name',
       render: (v) => <span style={{ fontFamily: '"SF Mono", monospace', fontSize: 13 }}>{v}</span>,
     },
     {
-      title: '触发次数',
-      dataIndex: 'count',
+      title: '触发总量',
       key: 'count',
       align: 'right',
-      render: (v) => <span style={{ fontVariantNumeric: 'tabular-nums' }}>{v || '-'}</span>,
+      render: (_, row) => {
+        const agg = aggMap[row.target_name];
+        const v = agg ? agg.count : null;
+        return v != null ? <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatCompact(v)}</span> : <span style={{ color: 'var(--text-3)' }}>-</span>;
+      },
+    },
+    {
+      title: '转化人数',
+      key: 'user',
+      align: 'right',
+      render: (_, row) => {
+        const agg = aggMap[row.target_name];
+        const v = agg ? agg.user : null;
+        return v != null ? <span style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</span> : <span style={{ color: 'var(--text-3)' }}>-</span>;
+      },
     },
     {
       title: '转化率',
-      dataIndex: 'rate',
       key: 'rate',
       align: 'right',
-      render: (v) => (v ? (
-        <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--brand-hover)' }}>{v}%</span>
-      ) : '-'),
+      render: (_, row) => {
+        const agg = aggMap[row.target_name];
+        if (!agg || agg.rate === 0) return <span style={{ color: 'var(--text-3)' }}>-</span>;
+        return <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--brand-hover)' }}>{agg.rate.toFixed(2)}%</span>;
+      },
     },
   ];
 
@@ -637,7 +672,13 @@ function TargetsTab({ targets, onAddTarget }) {
         rowKey={(row) => row.target_name}
         columns={columns}
         pagination={false}
+        size="middle"
       />
+      {!rateData && (
+        <p style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: 13, marginTop: 16 }}>
+          访问「转化率」Tab 加载数据后，此处将展示各指标的聚合统计
+        </p>
+      )}
     </div>
   );
 }
