@@ -443,7 +443,9 @@ function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
               转化率：转化人数／实验UV<br />
               转化人数：累计指标触发人数<br />
               总值：累计上报指标数<br />
-              均值：指标总值／实验UV<br />
+              人均：总值／转化人数<br />
+              全量均值：总值／实验UV（含未转化用户，用于 Z 检验）<br />
+              标准差：全量均值的离散程度<br />
               lift：相对对照组转化率的提升幅度
             </div>
           }
@@ -490,7 +492,12 @@ function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
               <SignificanceBadge sig={sig} />
             </div>
             <div className="rate-line">转化人数：<b>{t.user || 0}</b></div>
-            <div className="rate-line rate-line-muted">总值：{t.count || 0} · 人均：{(t.user ? (t.count / t.user).toFixed(2) : '-')}</div>
+            <div className="rate-line rate-line-muted">
+                总值：{t.count || 0} · 人均：{t.user ? (t.count / t.user).toFixed(2) : '-'}
+              </div>
+              <div className="rate-line rate-line-muted">
+                全量均值：{tRealMean.toFixed(2)} · 标准差：{tRealStd.toFixed(3)}
+              </div>
             {row.value !== defaultValue && (
               <div className="rate-line rate-line-muted" style={{ marginTop: 2 }}>
                 Z: {isNaN(zscore) ? '-' : zscore.toFixed(3)} · p: {isNaN(pvalue) ? '-' : pvalue.toFixed(3)}
