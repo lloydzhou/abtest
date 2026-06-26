@@ -3,15 +3,14 @@
  * 表格展示所有流量层、流量分配、实验数
  */
 import React, { useState, useMemo } from 'react';
-import { Button, Table, Progress, Space, Tooltip } from 'antd';
+import { Button, Table, Space, Tooltip } from 'antd';
 import { PlusOutlined, PieChartOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
+import TrafficBar from '../components/TrafficBar';
 import NewLayerModal from '../components/NewLayerModal';
 import EditLayerWeightModal from '../components/EditLayerWeightModal';
 
 export default function Layers() {
-  const navigate = useNavigate();
   const { layers, layerWeight, tests, loading } = useApp();
   const [showNewLayer, setShowNewLayer] = useState(false);
   const [editLayer, setEditLayer] = useState(null);
@@ -23,6 +22,7 @@ export default function Layers() {
       key: layer,
       name: layer,
       weight: lw.total,
+      segments: lw.weight.map((w) => ({ label: w.name || w.var_name, weight: w.weight })),
       var_count: lw.weight.length,
       test_count: layerTests.length,
       running_count: layerTests.filter((t) => t.status === 'running').length,
@@ -41,17 +41,16 @@ export default function Layers() {
       ),
     },
     {
-      title: '已分配流量',
-      dataIndex: 'weight',
-      key: 'weight',
-      width: 240,
-      render: (v) => (
-        <Progress
-          percent={v}
-          size="small"
-          status={v >= 100 ? 'exception' : 'normal'}
-          format={(p) => `${p}%`}
-        />
+      title: '流量分配',
+      key: 'traffic',
+      width: 280,
+      render: (_, row) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <TrafficBar segments={row.segments} height={20} />
+          <span style={{ fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+            {row.weight}%
+          </span>
+        </div>
       ),
     },
     {

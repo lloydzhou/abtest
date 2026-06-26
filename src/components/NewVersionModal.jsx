@@ -39,6 +39,7 @@ export default function NewVersionModal({ open, experiment, onClose }) {
       cancelText="取消"
       okButtonProps={{ htmlType: 'submit', form: 'newVersionForm' }}
       destroyOnHidden
+      maskClosable={false}
     >
       {remainWeight === 0 && (
         <Alert

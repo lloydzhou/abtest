@@ -655,6 +655,7 @@ ul, ol {
 
 .rate-line {
   color: var(--text-2);
+  white-space: nowrap;
 }
 
 .rate-line-muted {
@@ -724,6 +725,132 @@ ul, ol {
   color: var(--text-3);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+/* ==================== 迷你流量条 ==================== */
+.traffic-bar {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f1f5f9;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.traffic-bar-seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  transition: width 0.15s ease;
+}
+
+.traffic-bar-unallocated {
+  background-image: repeating-linear-gradient(
+    45deg, #e2e8f0, #e2e8f0 4px, #eef2f7 4px, #eef2f7 8px
+  );
+}
+
+.traffic-bar-label {
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  white-space: nowrap;
+}
+
+.traffic-bar-label-muted {
+  color: #94a3b8;
+  text-shadow: none;
+}
+
+/* ==================== 流量分配器 ==================== */
+.traffic-allocator {
+  padding: 4px 0;
+}
+
+/* 总览条 */
+.ta-overview {
+  margin-bottom: 24px;
+}
+
+.ta-overview-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f5f9;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.ta-overview-seg {
+  height: 100%;
+  transition: width 0.15s ease;
+  min-width: 0;
+}
+
+.ta-overview-unallocated {
+  background: #e2e8f0;
+  background-image: repeating-linear-gradient(
+    45deg, #e2e8f0, #e2e8f0 6px, #eef2f7 6px, #eef2f7 12px
+  );
+}
+
+.ta-overview-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.ta-overview-info strong {
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.ta-overview-remain {
+  color: #94a3b8;
+}
+
+/* 各段 slider */
+.ta-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ta-slider-row {
+  padding: 0 2px;
+}
+
+.ta-slider-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ta-slider-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ta-slider-label {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.ta-slider-value {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ==================== 响应式 ==================== */

@@ -21,7 +21,7 @@ import {
 import { Line } from '@ant-design/plots';
 import { useApp } from '../store/AppContext';
 import { parseRateData, parseTrafficData } from '../utils/parse';
-import { getZPercent, ZScore, realMeanStd } from '../utils/stats';
+import { getZPercent, ZScore, realMeanStd, proportionZTest } from '../utils/stats';
 import { getStatusConfig, getSignificance } from '../constants';
 import EditWeightModal from '../components/EditWeightModal';
 import NewVersionModal from '../components/NewVersionModal';
@@ -90,6 +90,7 @@ export default function ExperimentDetail() {
   const handleTabChange = (key) => {
     setActiveTab(key);
     if (key === 'rate' && !rateData) fetchRate();
+    if (key === 'targets' && !rateData) fetchRate();
     if (key === 'overview' && !trafficData) fetchTraffic();
   };
 
@@ -225,6 +226,8 @@ export default function ExperimentDetail() {
             children: (
               <TargetsTab
                 targets={testTargets}
+                rateData={rateData}
+                defaultValue={test.default_value}
                 onAddTarget={() => setShowNewTarget(true)}
               />
             ),
@@ -347,7 +350,7 @@ function TrafficChart({ trafficData, versions }) {
       point={{ size: 3 }}
       yAxis={{ label: { formatter: (v) => v } }}
       tooltip={{ showCrosshairs: true }}
-      color={['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#4f46e5']}
+      color={['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899']}
       theme={{
         styleSheet: {
           brandColor: '#6366f1',
@@ -441,7 +444,9 @@ function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
               转化率：转化人数／实验UV<br />
               转化人数：累计指标触发人数<br />
               总值：累计上报指标数<br />
-              均值：指标总值／实验UV<br />
+              人均：总值／转化人数<br />
+              全量均值：总值／实验UV（含未转化用户，用于 Z 检验）<br />
+              标准差：全量均值的离散程度<br />
               lift：相对对照组转化率的提升幅度
             </div>
           }
@@ -465,11 +470,18 @@ function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
           t.mean || 0, t.std || 0, t.user || 0, uv,
         );
 
-        const zscore = ZScore(tRealMean, tRealStd, tRealN, dRealMean, dRealStd, dRealN);
-        const pvalue = 2 * getZPercent(-Math.abs(zscore));
-
         const treatmentRate = (t.user || 0) / uv;
         const controlRate = controlRates[target] || 0;
+
+        // 转化率比例检验（用于显著性判定）
+        const { zscore, pvalue } = proportionZTest(
+          t.user || 0, uv,
+          dt.user || 0, defaultRow.uv || 0,
+        );
+
+        // 指标值均值 Z 检验（仅展示）
+        const meanZscore = ZScore(tRealMean, tRealStd, tRealN, dRealMean, dRealStd, dRealN);
+        const meanPvalue = 2 * getZPercent(-Math.abs(meanZscore));
 
         const sig = getSignificance({
           isControl: row.value === defaultValue,
@@ -488,10 +500,20 @@ function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
               <SignificanceBadge sig={sig} />
             </div>
             <div className="rate-line">转化人数：<b>{t.user || 0}</b></div>
-            <div className="rate-line rate-line-muted">总值：{t.count || 0} · 均值：{tRealMean.toFixed(2)}</div>
+            <div className="rate-line rate-line-muted">
+                总值：{t.count || 0} · 人均：{t.user ? (t.count / t.user).toFixed(2) : '-'}
+              </div>
+              <div className="rate-line rate-line-muted">
+                全量均值：{tRealMean.toFixed(2)} · 标准差：{tRealStd.toFixed(3)}
+              </div>
             {row.value !== defaultValue && (
               <div className="rate-line rate-line-muted" style={{ marginTop: 2 }}>
-                Z: {isNaN(zscore) ? '-' : zscore.toFixed(3)} · p: {isNaN(pvalue) ? '-' : pvalue.toFixed(3)}
+                转化率检验 Z={isNaN(zscore) ? '-' : zscore.toFixed(3)} p={isNaN(pvalue) ? '-' : pvalue.toFixed(3)}
+              </div>
+            )}
+            {row.value !== defaultValue && (
+              <div className="rate-line rate-line-muted">
+                均值检验 Z={isNaN(meanZscore) ? '-' : meanZscore.toFixed(3)} p={isNaN(meanPvalue) ? '-' : meanPvalue.toFixed(3)}
               </div>
             )}
           </div>
@@ -601,27 +623,50 @@ function VersionsTab({ versions, tw, onEditWeight, onAddVersion }) {
 /* ============================================================
  * Tab 4: 指标管理
  * ============================================================ */
-function TargetsTab({ targets, onAddTarget }) {
+function TargetsTab({ targets, rateData, defaultValue, onAddTarget }) {
+  // aggregate from rate data
+  const aggMap = React.useMemo(() => {
+    if (!rateData || rateData.error) return {};
+    const { targets: rateTargets = [], versions: rawVersions = [] } = rateData;
+    const rows = parseRateData(rawVersions, rateTargets, defaultValue);
+    const map = {};
+    let totalUV = 0;
+    for (const row of rows) totalUV += row.uv || 0;
+    for (const tName of rateTargets) {
+      let count = 0, user = 0;
+      for (const row of rows) {
+        const t = row.targets[tName];
+        if (t) { count += t.count || 0; user += t.user || 0; }
+      }
+      map[tName] = { count, user, rate: totalUV > 0 ? (user / totalUV) * 100 : 0 };
+    }
+    return map;
+  }, [rateData, defaultValue]);
+
   const columns = [
     {
       title: '指标名称', dataIndex: 'target_name', key: 'target_name',
       render: (v) => <span style={{ fontFamily: '"SF Mono", monospace', fontSize: 13 }}>{v}</span>,
     },
     {
-      title: '触发次数',
-      dataIndex: 'count',
+      title: <Tooltip title="所有版本的指标触发值之和">触发总量</Tooltip>,
       key: 'count',
       align: 'right',
-      render: (v) => <span style={{ fontVariantNumeric: 'tabular-nums' }}>{v || '-'}</span>,
+      render: (_, row) => {
+        const agg = aggMap[row.target_name];
+        const v = agg ? agg.count : null;
+        return v != null ? <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatCompact(v)}</span> : <span style={{ color: 'var(--text-3)' }}>-</span>;
+      },
     },
     {
-      title: '转化率',
-      dataIndex: 'rate',
-      key: 'rate',
+      title: <Tooltip title="所有版本触发该指标的独立用户数之和">转化人数</Tooltip>,
+      key: 'user',
       align: 'right',
-      render: (v) => (v ? (
-        <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--brand-hover)' }}>{v}%</span>
-      ) : '-'),
+      render: (_, row) => {
+        const agg = aggMap[row.target_name];
+        const v = agg ? agg.user : null;
+        return v != null ? <span style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</span> : <span style={{ color: 'var(--text-3)' }}>-</span>;
+      },
     },
   ];
 
@@ -637,7 +682,13 @@ function TargetsTab({ targets, onAddTarget }) {
         rowKey={(row) => row.target_name}
         columns={columns}
         pagination={false}
+        size="middle"
       />
+      {!rateData && (
+        <p style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: 13, marginTop: 16 }}>
+          访问「转化率」Tab 加载数据后，此处将展示各指标的聚合统计
+        </p>
+      )}
     </div>
   );
 }

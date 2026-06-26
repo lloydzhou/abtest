@@ -1,9 +1,10 @@
 /**
- * 编辑版本流量弹窗
+ * 编辑版本流量弹窗 —— 使用 TrafficAllocator 组件
  */
 import React, { useState, useEffect } from 'react';
-import { Modal, Slider, message } from 'antd';
+import { Modal, message } from 'antd';
 import { useApp } from '../store/AppContext';
+import TrafficAllocator from './TrafficAllocator';
 
 export default function EditWeightModal({ open, varName, onClose }) {
   const { testWeight, editVersionWeight } = useApp();
@@ -12,7 +13,6 @@ export default function EditWeightModal({ open, varName, onClose }) {
   const tw = testWeight[varName] || { weight: [], total: 0 };
   const versionWeights = tw.weight;
 
-  // 弹窗打开时初始化
   useEffect(() => {
     if (open && varName) {
       const init = {};
@@ -22,6 +22,13 @@ export default function EditWeightModal({ open, varName, onClose }) {
       setWeights(init);
     }
   }, [open, varName]); // eslint-disable-line
+
+  // 构建分配器 items
+  const allocatorItems = versionWeights.map(({ value, name, weight }) => ({
+    key: value,
+    label: name === value ? value : `${name}(${value})`,
+    weight: weights[value] ?? weight,
+  }));
 
   const handleOk = async () => {
     const total = Object.values(weights).reduce((s, i) => s + i, 0);
@@ -51,25 +58,18 @@ export default function EditWeightModal({ open, varName, onClose }) {
     <Modal
       title="编辑版本流量"
       open={open}
-      width={600}
+      width={640}
       onCancel={onClose}
       onOk={handleOk}
       destroyOnHidden
+      maskClosable={false}
     >
-      {versionWeights.map(({ value, name, weight }) => (
-        <div key={value} style={{ marginBottom: 40 }}>
-          <div style={{ marginBottom: 8, color: '#667085', fontSize: 13 }}>
-            {name === value ? name : `${name}(${value})`}：{weights[value] ?? weight}%
-          </div>
-          <Slider
-            min={0}
-            max={100}
-            defaultValue={weight}
-            onChange={(v) => setWeights((prev) => ({ ...prev, [value]: v }))}
-            tooltip={{ open: true, formatter: (v) => `${v}%`, getPopupContainer: (n) => n.parentElement }}
-          />
-        </div>
-      ))}
+      {allocatorItems.length > 0 && (
+        <TrafficAllocator
+          items={allocatorItems}
+          onChange={(newWeights) => setWeights(newWeights)}
+        />
+      )}
     </Modal>
   );
 }

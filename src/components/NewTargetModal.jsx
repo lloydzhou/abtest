@@ -33,6 +33,7 @@ export default function NewTargetModal({ open, varName, onClose }) {
       cancelText="取消"
       okButtonProps={{ htmlType: 'submit', form: 'newTargetForm' }}
       destroyOnHidden
+      maskClosable={false}
     >
       <Form id="newTargetForm" form={form} onFinish={handleSubmit}>
         <FormItem
