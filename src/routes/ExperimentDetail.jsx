@@ -656,16 +656,6 @@ function TargetsTab({ targets, rateData, defaultValue, onAddTarget }) {
         return v != null ? <span style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</span> : <span style={{ color: 'var(--text-3)' }}>-</span>;
       },
     },
-    {
-      title: <Tooltip title="转化人数 ／ 所有版本实验UV之和。同一批用户可能触发多个指标，所以不同指标的转化率可能相同">转化率</Tooltip>,
-      key: 'rate',
-      align: 'right',
-      render: (_, row) => {
-        const agg = aggMap[row.target_name];
-        if (!agg || agg.rate === 0) return <span style={{ color: 'var(--text-3)' }}>-</span>;
-        return <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--brand-hover)' }}>{agg.rate.toFixed(2)}%</span>;
-      },
-    },
   ];
 
   return (
