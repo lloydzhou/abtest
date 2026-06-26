@@ -7,7 +7,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Button, Collapse, Progress, Tag, Space, Tooltip, Input, Select,
+  Button, Collapse, Tag, Space, Tooltip, Input, Select,
   Table, Segmented,
 } from 'antd';
 import {
@@ -19,6 +19,7 @@ import { getStatusConfig } from '../constants';
 import NewTestModal from '../components/NewTestModal';
 import EditWeightModal from '../components/EditWeightModal';
 import NewVersionModal from '../components/NewVersionModal';
+import TrafficBar from '../components/TrafficBar';
 import { ExperimentsSkeleton } from '../components/Skeletons';
 import EmptyState from '../components/EmptyState';
 
@@ -107,11 +108,9 @@ export default function Experiments() {
             <span className="layer-header-name">{layer}</span>
             <Tag style={{ borderRadius: 6 }}>{layerTests.length} 个实验</Tag>
             <div className="layer-header-bar">
-              <Progress
-                percent={lw.total}
-                size="small"
-                format={(p) => `${p}%`}
-                status={lw.total >= 100 ? 'exception' : 'normal'}
+              <TrafficBar
+                segments={lw.weight.map((w) => ({ label: w.name || w.var_name, weight: w.weight }))}
+                height={20}
               />
             </div>
             <Button type="link" size="small" icon={<PlusOutlined />} onClick={() => openNewTest(layer)}>
@@ -199,7 +198,7 @@ export default function Experiments() {
         width: 160,
         render: (_, row) => {
           const w = row.weight || 0;
-          return <Progress percent={w} size="small" format={(p) => `${p}%`} />;
+          return <TrafficBar segments={[{ weight: w }]} height={18} />;
         },
       },
       {
