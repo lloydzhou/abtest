@@ -45,6 +45,7 @@ export default function NewTestModal({ open, defaultLayer, onClose }) {
       cancelText="取消"
       okButtonProps={{ htmlType: 'submit', form: 'newTestForm' }}
       destroyOnHidden
+      maskClosable={false}
     >
       <Alert
         type="info"

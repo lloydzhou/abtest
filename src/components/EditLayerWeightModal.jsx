@@ -55,6 +55,7 @@ export default function EditLayerWeightModal({ open, layer, onClose }) {
       onCancel={onClose}
       onOk={handleOk}
       destroyOnHidden
+      maskClosable={false}
     >
       {allocatorItems.length > 0 && (
         <TrafficAllocator

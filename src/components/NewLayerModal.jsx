@@ -33,6 +33,7 @@ export default function NewLayerModal({ open, onClose }) {
       cancelText="取消"
       okButtonProps={{ htmlType: 'submit', form: 'newLayerForm' }}
       destroyOnHidden
+      maskClosable={false}
     >
       <Form id="newLayerForm" form={form} onFinish={handleSubmit}>
         <FormItem

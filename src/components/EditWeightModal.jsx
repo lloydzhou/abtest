@@ -62,6 +62,7 @@ export default function EditWeightModal({ open, varName, onClose }) {
       onCancel={onClose}
       onOk={handleOk}
       destroyOnHidden
+      maskClosable={false}
     >
       {allocatorItems.length > 0 && (
         <TrafficAllocator
