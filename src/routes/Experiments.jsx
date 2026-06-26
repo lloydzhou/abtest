@@ -104,16 +104,16 @@ export default function Experiments() {
       return {
         key: layer,
         label: (
-          <div className="layer-header" onClick={(e) => e.stopPropagation()}>
+          <div className="layer-header">
             <span className="layer-header-name">{layer}</span>
             <Tag style={{ borderRadius: 6 }}>{layerTests.length} 个实验</Tag>
-            <div className="layer-header-bar">
+            <div className="layer-header-bar" onClick={(e) => e.stopPropagation()}>
               <TrafficBar
                 segments={lw.weight.map((w) => ({ label: w.name || w.var_name, weight: w.weight }))}
                 height={20}
               />
             </div>
-            <Button type="link" size="small" icon={<PlusOutlined />} onClick={() => openNewTest(layer)}>
+            <Button type="link" size="small" icon={<PlusOutlined />} onClick={(e) => { e.stopPropagation(); openNewTest(layer); }}>
               新建实验
             </Button>
           </div>
