@@ -490,7 +490,7 @@ function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
               <SignificanceBadge sig={sig} />
             </div>
             <div className="rate-line">转化人数：<b>{t.user || 0}</b></div>
-            <div className="rate-line rate-line-muted">总值：{t.count || 0} · 均值：{tRealMean.toFixed(2)}</div>
+            <div className="rate-line rate-line-muted">总值：{t.count || 0} · 人均：{(t.user ? (t.count / t.user).toFixed(2) : '-')}</div>
             {row.value !== defaultValue && (
               <div className="rate-line rate-line-muted" style={{ marginTop: 2 }}>
                 Z: {isNaN(zscore) ? '-' : zscore.toFixed(3)} · p: {isNaN(pvalue) ? '-' : pvalue.toFixed(3)}
