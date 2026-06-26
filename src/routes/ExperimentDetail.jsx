@@ -470,11 +470,18 @@ function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
           t.mean || 0, t.std || 0, t.user || 0, uv,
         );
 
-        const zscore = ZScore(tRealMean, tRealStd, tRealN, dRealMean, dRealStd, dRealN);
-        const pvalue = 2 * getZPercent(-Math.abs(zscore));
-
         const treatmentRate = (t.user || 0) / uv;
         const controlRate = controlRates[target] || 0;
+
+        // 转化率比例检验（用于显著性判定）
+        const { zscore, pvalue } = proportionZTest(
+          t.user || 0, uv,
+          dt.user || 0, defaultRow.uv || 0,
+        );
+
+        // 指标值均值 Z 检验（仅展示）
+        const meanZscore = ZScore(tRealMean, tRealStd, tRealN, dRealMean, dRealStd, dRealN);
+        const meanPvalue = 2 * getZPercent(-Math.abs(meanZscore));
 
         const sig = getSignificance({
           isControl: row.value === defaultValue,
@@ -501,7 +508,12 @@ function RateTab({ rateData, rateLoading, defaultValue, onRetry }) {
               </div>
             {row.value !== defaultValue && (
               <div className="rate-line rate-line-muted" style={{ marginTop: 2 }}>
-                Z: {isNaN(zscore) ? '-' : zscore.toFixed(3)} · p: {isNaN(pvalue) ? '-' : pvalue.toFixed(3)}
+                转化率检验 Z={isNaN(zscore) ? '-' : zscore.toFixed(3)} p={isNaN(pvalue) ? '-' : pvalue.toFixed(3)}
+              </div>
+            )}
+            {row.value !== defaultValue && (
+              <div className="rate-line rate-line-muted">
+                均值检验 Z={isNaN(meanZscore) ? '-' : meanZscore.toFixed(3)} p={isNaN(meanPvalue) ? '-' : meanPvalue.toFixed(3)}
               </div>
             )}
           </div>
