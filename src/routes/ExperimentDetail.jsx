@@ -90,6 +90,7 @@ export default function ExperimentDetail() {
   const handleTabChange = (key) => {
     setActiveTab(key);
     if (key === 'rate' && !rateData) fetchRate();
+    if (key === 'targets' && !rateData) fetchRate();
     if (key === 'overview' && !trafficData) fetchTraffic();
   };
 
