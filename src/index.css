@@ -655,6 +655,7 @@ ul, ol {
 
 .rate-line {
   color: var(--text-2);
+  white-space: nowrap;
 }
 
 .rate-line-muted {
