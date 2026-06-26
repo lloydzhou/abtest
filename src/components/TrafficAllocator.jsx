@@ -69,9 +69,9 @@ export default function TrafficAllocator({ items, onChange }) {
               </div>
               <Slider
                 min={0}
-                max={maxForThis}
+                max={100}
                 value={it.weight}
-                onChange={(v) => handleChange(it.key, v)}
+                onChange={(v) => handleChange(it.key, Math.min(v, maxForThis))}
                 tooltip={{ formatter: (v) => `${v}%` }}
                 style={{ margin: '0 2px' }}
               />
