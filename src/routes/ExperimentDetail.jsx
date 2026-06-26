@@ -21,7 +21,7 @@ import {
 import { Line } from '@ant-design/plots';
 import { useApp } from '../store/AppContext';
 import { parseRateData, parseTrafficData } from '../utils/parse';
-import { getZPercent, ZScore, realMeanStd } from '../utils/stats';
+import { getZPercent, ZScore, realMeanStd, proportionZTest } from '../utils/stats';
 import { getStatusConfig, getSignificance } from '../constants';
 import EditWeightModal from '../components/EditWeightModal';
 import NewVersionModal from '../components/NewVersionModal';
