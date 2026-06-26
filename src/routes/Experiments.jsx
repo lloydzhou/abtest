@@ -398,38 +398,18 @@ function ExperimentCard({
           <div className="exp-card-label">
             版本流量（{tw.weight.length} 个版本，已分配 {tw.total}%）
           </div>
-          <div className="version-bars">
-            {tw.weight.map(({ value, name, weight }) => {
-              const ver = versions.find(
-                (v) => v.var_name === test.var_name && v.value === value,
-              );
-              return (
-                <Tooltip
-                  key={value}
-                  title={
-                    (name === value ? `${value}` : `${name}(${value})`) +
-                    `: ${weight}%` +
-                    (ver ? `, pv: ${ver.pv || '-'}, uv: ${ver.uv || '-'}` : '')
-                  }
-                >
-                  <div className="version-bar-item">
-                    <div
-                      className="version-bar-fill"
-                      style={{ width: '100%', opacity: weight > 0 ? 1 : 0.35 }}
-                    >
-                      <span>{weight}%</span>
-                    </div>
-                    <span className="version-bar-label">
-                      {name === value ? value : name}
-                    </span>
-                  </div>
-                </Tooltip>
-              );
-            })}
-            {tw.weight.length === 0 && (
-              <span style={{ color: 'var(--text-3)', fontSize: 13 }}>暂未配置版本</span>
-            )}
-          </div>
+          {tw.weight.length > 0 ? (
+            <TrafficBar
+              segments={tw.weight.map(({ value, name, weight }) => ({
+                label: name === value ? value : `${name}(${value})`,
+                weight,
+              }))}
+              height={20}
+              showLabel
+            />
+          ) : (
+            <span style={{ color: 'var(--text-3)', fontSize: 13 }}>暂未配置版本</span>
+          )}
         </div>
 
         {testTargets.length > 0 && (
