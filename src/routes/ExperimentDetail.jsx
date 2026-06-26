@@ -636,7 +636,7 @@ function TargetsTab({ targets, rateData, defaultValue, onAddTarget }) {
       render: (v) => <span style={{ fontFamily: '"SF Mono", monospace', fontSize: 13 }}>{v}</span>,
     },
     {
-      title: '触发总量',
+      title: <Tooltip title="所有版本的指标触发值之和">触发总量</Tooltip>,
       key: 'count',
       align: 'right',
       render: (_, row) => {
@@ -646,7 +646,7 @@ function TargetsTab({ targets, rateData, defaultValue, onAddTarget }) {
       },
     },
     {
-      title: '转化人数',
+      title: <Tooltip title="所有版本触发该指标的独立用户数之和">转化人数</Tooltip>,
       key: 'user',
       align: 'right',
       render: (_, row) => {
@@ -656,7 +656,7 @@ function TargetsTab({ targets, rateData, defaultValue, onAddTarget }) {
       },
     },
     {
-      title: '转化率',
+      title: <Tooltip title="转化人数 ／ 所有版本实验UV之和。同一批用户可能触发多个指标，所以不同指标的转化率可能相同">转化率</Tooltip>,
       key: 'rate',
       align: 'right',
       render: (_, row) => {
