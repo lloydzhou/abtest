@@ -9,7 +9,7 @@
  */
 import React from 'react';
 
-const COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#4f46e5', '#7c3aed', '#6366f1'];
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6'];
 
 export default function TrafficBar({ segments = [], height = 24, showLabel = false }) {
   const total = segments.reduce((s, seg) => s + (seg.weight || 0), 0);

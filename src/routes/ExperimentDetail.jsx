@@ -347,7 +347,7 @@ function TrafficChart({ trafficData, versions }) {
       point={{ size: 3 }}
       yAxis={{ label: { formatter: (v) => v } }}
       tooltip={{ showCrosshairs: true }}
-      color={['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#4f46e5']}
+      color={['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899']}
       theme={{
         styleSheet: {
           brandColor: '#6366f1',
